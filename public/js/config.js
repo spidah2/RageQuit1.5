@@ -136,7 +136,7 @@ const GAME_CONFIG = {
         FIREBALL_COST: 20,            // Mana cost
         FIREBALL_DMG: 30,             // Direct damage HP
         FIREBALL_DMG_SPLASH: 5,       // Splash damage in radius
-        FIREBALL_SPEED: 600,          // Units/sec
+        FIREBALL_SPEED: 450,          // Units/sec (reduced from 600 for shorter range)
         FIREBALL_LIFETIME: 2000,      // ms
         FIREBALL_CAST_TIME: 0.5,      // seconds
         FIREBALL_RADIUS: 35,          // Explosion radius
@@ -265,8 +265,8 @@ const GAME_CONFIG = {
         MISSILE_GRAVITY: 300,           // Gravity for missiles
         PUSH_SPEED: 700,                // Shockwave projectile speed
         PUSH_GRAVITY: 300,              // Gravity for push spell
-        FIREBALL_SPEED: 600,            // Fireball projectile speed
-        FIREBALL_GRAVITY: 300,          // Gravity for fireball
+        FIREBALL_SPEED: 450,            // Fireball projectile speed (reduced for shorter range)
+        FIREBALL_GRAVITY: 500,          // Gravity for fireball (increased for more arc)
         ARROW_SPEED: 1000,              // Arrow projectile speed
         ARROW_GRAVITY: 5                // Light gravity for arrows
     },

@@ -340,9 +340,9 @@ function fireHitscan() {
             // Calcola la direzione dal punto di spawn al target
             let velocityDir = new THREE.Vector3().subVectors(targetPoint, spawnPos).normalize();
             
-            // FIREBALL: add slight upward component for gentle arc (parabola)
+            // FIREBALL: add upward component for pronounced arc (parabola)
             if (type === 3) {
-                velocityDir.y += 0.15; // Light lift for arc
+                velocityDir.y += 0.25; // More lift for better arc
                 velocityDir.normalize();
             }
             
@@ -371,9 +371,9 @@ function fireHitscan() {
             proj.position.copy(startPos);
             let dirVec = new THREE.Vector3(direction.x, direction.y, direction.z).normalize();
             
-            // FIREBALL: add slight upward component for gentle arc (parabola)
+            // FIREBALL: add upward component for pronounced arc (parabola)
             if (type === 3) {
-                dirVec.y += 0.15; // Light lift for arc
+                dirVec.y += 0.25; // More lift for better arc
                 dirVec.normalize();
             }
             

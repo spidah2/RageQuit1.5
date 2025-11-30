@@ -17,6 +17,7 @@ class AssetManager {
 
     /**
      * Crea un modello di giocatore completo pronto per l'uso
+     * Sistema a 4 classi basato su teamColor
      * @param {number} teamColor - Colore esadecimale della squadra (es. 0xff0000)
      * @param {string} skinId - ID della skin (per future espansioni)
      * @returns {THREE.Group} Gruppo 3D con il modello giocatore completo
@@ -29,18 +30,40 @@ class AssetManager {
             return this.cache.playerMeshes[cacheKey].clone();
         }
 
-        // Determina se usare skin specializzata basato su teamColor
-        const isRedTeam = (teamColor === 0x8B0000); // CARNAGE team
+        // SWITCH CASE: Seleziona skin in base al colore squadra
+        let playerGroup;
+        let skinName;
         
-        // Crea il modello appropriato
-        const playerGroup = isRedTeam 
-            ? this._createWizardMesh(teamColor)      // Skin speciale "Mago" per CARNAGE
-            : this._createStandardArmorMesh(teamColor); // Armatura standard per altri team
+        switch(teamColor) {
+            case 0x8B0000: // Rosso - CARNAGE
+                playerGroup = this._createWizardMesh(teamColor);
+                skinName = 'WIZARD';
+                break;
+                
+            case 0x003300: // Nero/Verde Scuro - GRAVES
+                playerGroup = this._createKnightMesh(teamColor);
+                skinName = 'KNIGHT';
+                break;
+                
+            case 0x1B2F2F: // Verde Scuro - ASSASSIN
+                playerGroup = this._createAssassinMesh(teamColor);
+                skinName = 'ASSASSIN';
+                break;
+                
+            case 0x550055: // Viola - BERSERKER
+                playerGroup = this._createBerserkerMesh(teamColor);
+                skinName = 'BERSERKER';
+                break;
+                
+            default:
+                playerGroup = this._createKnightMesh(teamColor);
+                skinName = 'KNIGHT_DEFAULT';
+        }
 
         // Cache il template
         this.cache.playerMeshes[cacheKey] = playerGroup;
         
-        logGame(`[AssetManager] Created player mesh: ${cacheKey} (${isRedTeam ? 'WIZARD' : 'STANDARD'})`, 'ASSET');
+        logGame(`[AssetManager] Created player mesh: ${cacheKey} (${skinName})`, 'ASSET');
         return playerGroup;
     }
 
@@ -169,10 +192,10 @@ class AssetManager {
     }
 
     /**
-     * Crea il modello standard di armatura (originale)
+     * Crea il modello Knight (GRAVES - originale armatura standard)
      * @private
      */
-    _createStandardArmorMesh(teamColor) {
+    _createKnightMesh(teamColor) {
         const playerGroup = new THREE.Group();
         
         // Materiali
@@ -247,6 +270,240 @@ class AssetManager {
 
         return playerGroup;
     }
+
+    /**
+     * Crea il modello Assassin (snello, agile, scuro)
+     * @private
+     */
+    _createAssassinMesh(teamColor) {
+        const playerGroup = new THREE.Group();
+        
+        // Materiali - scuri e mimetici
+        const armorMat = new THREE.MeshLambertMaterial({
+            color: teamColor,
+            emissive: 0x000000,
+            emissiveIntensity: 0.1,
+            flatShading: true
+        });
+        const clothMat = new THREE.MeshLambertMaterial({
+            color: 0x1a1a1a, // Nero quasi puro
+            emissive: 0x0a0a0a,
+            flatShading: true
+        });
+
+        // TORSO (sottile, snello)
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(3.0, 5.5, 2.2), armorMat);
+        torso.position.y = 3.5;
+        playerGroup.add(torso);
+        torso.userData.partName = 'torso';
+
+        // CLOAK (mantello scuro, decorativo)
+        const cloak = new THREE.Mesh(new THREE.BoxGeometry(3.2, 5.0, 0.5), clothMat);
+        cloak.position.set(0, 3.5, -1.2);
+        playerGroup.add(cloak);
+        cloak.userData.isTorsoPart = true;
+
+        // HEAD (con cappuccio)
+        const head = this._createAssassinHeadMesh(armorMat, clothMat);
+        head.position.y = 9.0;
+        playerGroup.add(head);
+
+        // LEGS (sottili come da assassino)
+        const legGeo = new THREE.BoxGeometry(1.2, 3.5, 1.0);
+
+        const legL = new THREE.Mesh(legGeo, armorMat);
+        legL.geometry.translate(0, -3.5 / 2, 0);
+        legL.position.set(-1.0, 3.0, 0);
+        playerGroup.add(legL);
+        legL.userData.partName = 'legL';
+
+        const legR = new THREE.Mesh(legGeo, armorMat);
+        legR.geometry.translate(0, -3.5 / 2, 0);
+        legR.position.set(1.0, 3.0, 0);
+        playerGroup.add(legR);
+        legR.userData.partName = 'legR';
+
+        // ARMS (snelli, asimmetrici)
+        const armLeftGeo = new THREE.BoxGeometry(0.9, 6.0, 0.9);
+        const armRightGeo = new THREE.BoxGeometry(0.9, 6.0, 0.9);
+
+        const armL = new THREE.Mesh(armLeftGeo, armorMat);
+        armL.geometry.translate(0, -2.5, 0);
+        armL.position.set(-2.5, 8.0, -0.3);
+        playerGroup.add(armL);
+        armL.userData.partName = 'armL';
+
+        const armR = new THREE.Mesh(armRightGeo, armorMat);
+        armR.geometry.translate(0, -2.5, 0);
+        armR.position.set(2.5, 8.0, 0);
+        playerGroup.add(armR);
+        armR.userData.partName = 'armR';
+
+        return playerGroup;
+    }
+
+    /**
+     * Crea la testa con cappuccio per l'Assassin
+     * @private
+     */
+    _createAssassinHeadMesh(armorMat, clothMat) {
+        const head = new THREE.Group();
+        
+        // Head base (piccolo)
+        const headGeom = new THREE.SphereGeometry(1.4, 8, 8);
+        const headMesh = new THREE.Mesh(headGeom, armorMat);
+        headMesh.scale.set(0.95, 1.0, 0.85);
+        head.add(headMesh);
+        headMesh.userData.partName = 'head';
+
+        // Cappuccio (cone semplice)
+        const hoodGeom = new THREE.ConeGeometry(1.6, 2.5, 8);
+        const hood = new THREE.Mesh(hoodGeom, clothMat);
+        hood.position.y = 1.0;
+        head.add(hood);
+        hood.userData.partName = 'hood';
+
+        // Viso (rectangle scuro per gli occhi)
+        const visor = new THREE.Mesh(
+            new THREE.BoxGeometry(1.6, 0.8, 0.3),
+            new THREE.MeshLambertMaterial({ color: 0x000000 })
+        );
+        visor.position.set(0, -0.2, 1.2);
+        head.add(visor);
+        visor.userData.partName = 'face';
+
+        head.userData.partName = 'head';
+        return head;
+    }
+
+    /**
+     * Crea il modello Berserker (massiccio, potente, poco armato)
+     * @private
+     */
+    _createBerserkerMesh(teamColor) {
+        const playerGroup = new THREE.Group();
+        
+        // Materiali - massiccio, carnale
+        const skinMat = new THREE.MeshLambertMaterial({
+            color: 0xAA6644, // Pelle marrone
+            emissive: 0x220000,
+            emissiveIntensity: 0.15,
+            flatShaking: true
+        });
+        const armorMat = new THREE.MeshLambertMaterial({
+            color: teamColor,
+            emissive: teamColor,
+            emissiveIntensity: 0.25,
+            flatShading: true
+        });
+        const spaulderMat = new THREE.MeshLambertMaterial({
+            color: 0x556B2F, // Colore sporco/marrone
+            flatShading: true
+        });
+
+        // TORSO (GRANDE E MASSICCIO)
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(5.5, 7.5, 3.8), skinMat);
+        torso.position.y = 4.0;
+        playerGroup.add(torso);
+        torso.userData.partName = 'torso';
+
+        // SPALLACCI (sulle spalle - parte del voluminoso)
+        const leftSpaulder = new THREE.Mesh(new THREE.BoxGeometry(2.5, 4.0, 2.5), spaulderMat);
+        leftSpaulder.position.set(-3.2, 5.5, 0);
+        playerGroup.add(leftSpaulder);
+        leftSpaulder.userData.isTorsoPart = true;
+
+        const rightSpaulder = new THREE.Mesh(new THREE.BoxGeometry(2.5, 4.0, 2.5), spaulderMat);
+        rightSpaulder.position.set(3.2, 5.5, 0);
+        playerGroup.add(rightSpaulder);
+        rightSpaulder.userData.isTorsoPart = true;
+
+        // HEAD (grande e muscoloso)
+        const head = this._createBerserkerHeadMesh(skinMat, armorMat);
+        head.position.y = 10.5;
+        playerGroup.add(head);
+
+        // LEGS (grosse e possenti)
+        const legGeo = new THREE.BoxGeometry(2.2, 3.75, 2.0);
+
+        const legL = new THREE.Mesh(legGeo, skinMat);
+        legL.geometry.translate(0, -3.75 / 2, 0);
+        legL.position.set(-1.8, 3.5, 0);
+        playerGroup.add(legL);
+        legL.userData.partName = 'legL';
+
+        const legR = new THREE.Mesh(legGeo, skinMat);
+        legR.geometry.translate(0, -3.75 / 2, 0);
+        legR.position.set(1.8, 3.5, 0);
+        playerGroup.add(legR);
+        legR.userData.partName = 'legR';
+
+        // ARMS (grosse e muscolose)
+        const armGeo = new THREE.BoxGeometry(2.0, 6.5, 1.8);
+
+        const armL = new THREE.Mesh(armGeo, skinMat);
+        armL.geometry.translate(0, -2.5, 0);
+        armL.position.set(-3.5, 8.5, 0);
+        playerGroup.add(armL);
+        armL.userData.partName = 'armL';
+
+        const armR = new THREE.Mesh(armGeo, skinMat);
+        armR.geometry.translate(0, -2.5, 0);
+        armR.position.set(3.5, 8.5, 0);
+        playerGroup.add(armR);
+        armR.userData.partName = 'armR';
+
+        return playerGroup;
+    }
+
+    /**
+     * Crea la testa per il Berserker
+     * @private
+     */
+    _createBerserkerHeadMesh(skinMat, armorMat) {
+        const head = new THREE.Group();
+        
+        // Head base (grande e largo)
+        const headGeom = new THREE.SphereGeometry(2.2, 8, 8);
+        const headMesh = new THREE.Mesh(headGeom, skinMat);
+        headMesh.scale.set(1.1, 1.15, 1.05);
+        head.add(headMesh);
+        headMesh.userData.partName = 'head';
+
+        // Copricapo (metallo)
+        const helmetGeom = new THREE.ConeGeometry(2.5, 2.0, 8);
+        const helmet = new THREE.Mesh(helmetGeom, armorMat);
+        helmet.position.y = 1.5;
+        head.add(helmet);
+        helmet.userData.partName = 'helmet';
+
+        // Corno sinistro
+        const hornLeftGeom = new THREE.ConeGeometry(0.8, 3.5, 6);
+        const hornLeft = new THREE.Mesh(hornLeftGeom, armorMat);
+        hornLeft.position.set(-1.8, 2.2, 0);
+        hornLeft.rotation.z = 0.4;
+        head.add(hornLeft);
+        hornLeft.userData.partName = 'hornLeft';
+
+        // Corno destro
+        const hornRightGeom = new THREE.ConeGeometry(0.8, 3.5, 6);
+        const hornRight = new THREE.Mesh(hornRightGeom, armorMat);
+        hornRight.position.set(1.8, 2.2, 0);
+        hornRight.rotation.z = -0.4;
+        head.add(hornRight);
+        hornRight.userData.partName = 'hornRight';
+
+        // Baffi/barba (semplice)
+        const beardGeom = new THREE.BoxGeometry(2.0, 0.8, 1.0);
+        const beard = new THREE.Mesh(beardGeom, skinMat);
+        beard.position.set(0, -1.2, 1.5);
+        head.add(beard);
+        beard.userData.partName = 'beard';
+
+        head.userData.partName = 'head';
+        return head;
+    }
+
 
     /**
      * Crea il modello dell'elmo/testa

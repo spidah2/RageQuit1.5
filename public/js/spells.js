@@ -57,12 +57,25 @@ function executeAttack(id) {
             const now = performance.now();
             
             if (id === 'bow') {
+                // Arrow shot - Check stamina and cooldown
+                if (playerStats.stamina < GAME_CONFIG.SPELL_PARAMS.ARROW_COST) { 
+                    addToLog("Insufficient Stamina!", "#555"); 
+                    return; 
+                }
+                if (now - lastAttackTime < GAME_CONFIG.SPELL_PARAMS.ARROW_COOLDOWN) {
+                    addToLog("Arrow recharging...", "#aaa");
+                    return;
+                }
+                playerStats.stamina -= GAME_CONFIG.SPELL_PARAMS.ARROW_COST;
+                lastAttackTime = now;
+                
                 // Arrow shot - Calculate from camera NOW
                 let camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
                 const spawnPos = camera.position.clone().add(camDir.multiplyScalar(2));
                 spawnProjectile(5); // 5 is Arrow ID
                 if (socket) socket.emit('playerAttack', { type: 5, origin: spawnPos, direction: camDir });
                 playSound('shoot_bolt'); // Reuse bolt sound
+                updateUI();
                 return;
             }
             
@@ -319,14 +332,16 @@ function fireHitscan() {
                  // Spell parte dalla punta dello staff
                  spawnPos = getStaffTip();
                  
-                 // Alza leggermente tutti gli spell per evitare di sparare a terra
-                 // Missile, Begone, Impale: +0.8
-                 // Fireball: +1.5 (più alto per evitare clipping)
+                 // Alza leggermente gli spell per evitare di sparare a terra
+                 // MISSILE(1): NO offset - deve essere perfettamente dritto al mirino
+                 // Begone(2), Impale(4): +0.8
+                 // Fireball(3): +1.5 (più alto per evitare clipping)
                  if (type === 3) {
                     spawnPos.y += 1.5;
-                 } else {
-                    spawnPos.y += 0.8; // Missile(1), Begone(2), Impale(4)
+                 } else if (type !== 1) {
+                    spawnPos.y += 0.8; // Begone(2), Impale(4)
                  }
+                 // type === 1 (Missile) NON aggiunge offset - deve essere perfetto
                  
                  // Se il player è troppo vicino a un nemico, sposta la spawn più avanti
                  let minEnemyDist = Infinity;

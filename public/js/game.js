@@ -1222,12 +1222,13 @@ let socket = null;
                         } else { 
                             // Altrimenti passo alla modalità Melee
                             weaponMode = 'melee'; 
-                            toggleWeapon(true); 
+                            toggleWeapon(true);
+                            updateActionBarUI();
                         } 
                         break;
                     case KEYBINDS.BOW_EQUIP:
                         // Select Bow directly
-                        if (weaponMode !== 'bow') { weaponMode = 'bow'; toggleWeapon(true); }
+                        if (weaponMode !== 'bow') { weaponMode = 'bow'; toggleWeapon(true); updateActionBarUI(); }
                         break;
                     case KEYBINDS.HEAL: performHeal(); break;
                     case 84: // T key - Toggle spectator (when dead)
@@ -1327,7 +1328,7 @@ let socket = null;
                                     if (weaponMode === 'melee') { performWhirlwind(); } 
                                     else { weaponMode = 'melee'; toggleWeapon(true); }
                                 }
-                                else if (action === 'BOW_EQUIP') { if (weaponMode !== 'bow') { weaponMode = 'bow'; toggleWeapon(true); } }
+                                else if (action === 'BOW_EQUIP') { if (weaponMode !== 'bow') { weaponMode = 'bow'; toggleWeapon(true); updateActionBarUI(); } }
                                 else if (action === 'HEAL') performHeal();
                                 else if (action === 'CONVERT_1') performConversion(1);
                                 else if (action === 'CONVERT_2') performConversion(2);

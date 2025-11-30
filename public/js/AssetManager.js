@@ -17,9 +17,9 @@ class AssetManager {
 
     /**
      * Crea un modello di giocatore completo pronto per l'uso
-     * Sistema a 4 classi basato su teamColor
+     * Sistema standardizzato: STESSO modello 3D per tutti, SOLO variazione di colore
      * @param {number} teamColor - Colore esadecimale della squadra (es. 0xff0000)
-     * @param {string} skinId - ID della skin (per future espansioni)
+     * @param {string} skinId - ID della skin (per future espansioni, attualmente ignorato)
      * @returns {THREE.Group} Gruppo 3D con il modello giocatore completo
      */
     getPlayerMesh(teamColor = 0x2c3e50, skinId = 'default') {
@@ -30,40 +30,13 @@ class AssetManager {
             return this.cache.playerMeshes[cacheKey].clone();
         }
 
-        // SWITCH CASE: Seleziona skin in base al colore squadra
-        let playerGroup;
-        let skinName;
-        
-        switch(teamColor) {
-            case 0x8B0000: // Rosso - CARNAGE
-                playerGroup = this._createWizardMesh(teamColor);
-                skinName = 'WIZARD';
-                break;
-                
-            case 0x003300: // Nero/Verde Scuro - GRAVES
-                playerGroup = this._createKnightMesh(teamColor);
-                skinName = 'KNIGHT';
-                break;
-                
-            case 0x1B2F2F: // Verde Scuro - ASSASSIN
-                playerGroup = this._createAssassinMesh(teamColor);
-                skinName = 'ASSASSIN';
-                break;
-                
-            case 0x550055: // Viola - BERSERKER
-                playerGroup = this._createBerserkerMesh(teamColor);
-                skinName = 'BERSERKER';
-                break;
-                
-            default:
-                playerGroup = this._createKnightMesh(teamColor);
-                skinName = 'KNIGHT_DEFAULT';
-        }
+        // STANDARDIZZAZIONE: Usa SEMPRE lo stesso modello, variando SOLO il colore
+        const playerGroup = this._createStandardArmorMesh(teamColor);
 
         // Cache il template
         this.cache.playerMeshes[cacheKey] = playerGroup;
         
-        logGame(`[AssetManager] Created player mesh: ${cacheKey} (${skinName})`, 'ASSET');
+        logGame(`[AssetManager] Created standard player mesh with color ${teamColor.toString(16)}`, 'ASSET');
         return playerGroup;
     }
 
@@ -193,10 +166,13 @@ class AssetManager {
     }
 
     /**
-     * Crea il modello Knight (GRAVES - originale armatura standard)
+     * Crea il modello standard (armatura militare) utilizzato per TUTTI i team
+     * Parametrizzato solo per COLORE
+     * @param {number} teamColor - Colore esadecimale della squadra
+     * @returns {THREE.Group} Modello giocatore completo
      * @private
      */
-    _createKnightMesh(teamColor) {
+    _createStandardArmorMesh(teamColor) {
         const playerGroup = new THREE.Group();
         
         // Materiali

@@ -104,7 +104,7 @@ const GAME_CONFIG = {
         BEGONE_RADIUS: 45,            // Explosion radius
         BEGONE_VISUAL_RADIUS: 20,     // Visual size
         BEGONE_FORCE_HORIZONTAL: 900, // Knockback force
-        BEGONE_FORCE_VERTICAL: 300,   // Vertical push
+        BEGONE_FORCE_VERTICAL: 80,    // Vertical push
         BEGONE_COLOR: 0xffffff,       // White
         BEGONE_COOLDOWN: 3000,        // ms
         
@@ -116,7 +116,7 @@ const GAME_CONFIG = {
         FIREBALL_LIFETIME: 2000,      // ms
         FIREBALL_CAST_TIME: 0.5,      // seconds
         FIREBALL_RADIUS: 35,          // Explosion radius
-        FIREBALL_FORCE_VERTICAL: 600, // Vertical push
+        FIREBALL_FORCE_VERTICAL: 80,  // Vertical push
         FIREBALL_COLOR: 0xff6600,     // Orange
         FIREBALL_COOLDOWN: 2000,      // ms
         
@@ -155,7 +155,7 @@ const GAME_CONFIG = {
         WHIRLWIND_DMG: 30,            // HP damage
         WHIRLWIND_RADIUS: 25,         // AoE radius (360°)
         WHIRLWIND_COOLDOWN: 2000,     // ms
-        WHIRLWIND_JUMP_FORCE: 150,    // Vertical jump
+        WHIRLWIND_JUMP_FORCE: 80,     // Vertical jump
         WHIRLWIND_EFFECT_DURATION: 500, // ms
         WHIRLWIND_PARTICLES_MIN: 40,
         WHIRLWIND_PARTICLES_MAX: 60,
@@ -197,7 +197,7 @@ const GAME_CONFIG = {
         
         // ===== 13. SALTO (Jump) =====
         JUMP_COST: 5,                 // Stamina cost
-        JUMP_FORCE: 200,              // Vertical force
+        JUMP_FORCE: 80,               // Vertical force
         JUMP_COOLDOWN: 300,           // ms between jumps
         JUMP_GRAVITY: 800,            // Units/sec² fall
         
@@ -221,7 +221,7 @@ const GAME_CONFIG = {
     // ===== PHYSICS & MOVEMENT CONSTANTS =====
     PHYSICS: {
         GRAVITY: 50,                    // Gravity acceleration (units/sec²)
-        SPEED: 50,                       // Base movement speed
+        SPEED: 120,                      // Base movement speed
         SPRINT_MULTIPLIER: 1.4,          // Sprint speed multiplier
         SPRINT_STAMINA_COST: 30,         // Stamina cost per second while sprinting
         BLOCK_STAMINA_COST: 5,           // Stamina cost per second while blocking

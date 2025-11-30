@@ -88,6 +88,43 @@ function createPlayer() {
     console.log('[CREATE PLAYER] PlayerLimbs initialized:', {armL: !!playerLimbs.armL, armR: !!playerLimbs.armR, legL: !!playerLimbs.legL, legR: !!playerLimbs.legR});
 }
 
+/**
+ * Refresh player limbs references after model changes
+ * Called when switching weapons to re-extract limb references from the current playerMesh
+ * This ensures updateAnimations always has valid references to the current limbs
+ */
+function refreshPlayerLimbs() {
+    if (!playerMesh) {
+        console.warn('⚠️ [REFRESH LIMBS] playerMesh not available, cannot refresh limbs');
+        return;
+    }
+    
+    // Reset limbs object
+    if (!playerLimbs) {
+        playerLimbs = {};
+    }
+    
+    // Re-extract limbs from playerMesh
+    playerMesh.traverse((child) => {
+        if (child.userData && child.userData.partName) {
+            const partName = child.userData.partName;
+            if (partName === 'armL') playerLimbs.armL = child;
+            else if (partName === 'armR') playerLimbs.armR = child;
+            else if (partName === 'legL') playerLimbs.legL = child;
+            else if (partName === 'legR') playerLimbs.legR = child;
+            else if (partName === 'head') playerLimbs.head = child;
+        }
+    });
+    
+    console.log('[REFRESH LIMBS] PlayerLimbs refreshed:', {
+        armL: !!playerLimbs.armL,
+        armR: !!playerLimbs.armR,
+        legL: !!playerLimbs.legL,
+        legR: !!playerLimbs.legR,
+        head: !!playerLimbs.head
+    });
+}
+
 function updatePlayerColor() {
     // SAFETY CHECK: Prevent crash if playerMesh not initialized yet
     if (!playerMesh) return;
@@ -484,6 +521,10 @@ function toggleWeapon(force) {
             } else if (isBow) {
                  if (slotE) slotE.classList.add('active');
             }
+            
+            // CRITICAL: Refresh playerLimbs references after model visibility changes
+            // This ensures updateAnimations always has valid references to current limbs
+            refreshPlayerLimbs();
         }
 
 function updateSwordAnimation(delta) {

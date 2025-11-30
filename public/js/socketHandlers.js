@@ -353,7 +353,8 @@ function registerAllSocketHandlers(socket) {
         }
         
         playerStats.isFalling = true;
-        canJump = false;
+        // NOTA: NON setta canJump = false qui - lascia che player.js lo gestisca quando controlla ground collision
+        // Questa linea causava jump permanentemente disabilitato dopo essere stati spinti
         playerMesh.position.y += 0.5;
     });
 

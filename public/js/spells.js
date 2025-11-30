@@ -85,7 +85,7 @@ function executeAttack(id) {
             playerStats.mana -= cost; lastAttackTime = now; isAttacking = true; attackTimer = 0;
             
             let camDir = new THREE.Vector3(); camera.getWorldDirection(camDir); let spawnPos = getStaffTip();
-            if (id === 4) { lastSpikesTime = now; fireHitscan(); } else { spawnProjectile(id); if (socket) socket.emit('playerAttack', { type: id, origin: spawnPos, direction: camDir }); }
+            if (id === 4) { lastSpikesTime = now; fireHitscan(); } else { spawnProjectile(id); if (socket) { console.log("👉 [ACTION] Invio richiesta attacco al server... (spellId=" + id + ")"); socket.emit('playerAttack', { type: id, origin: spawnPos, direction: camDir }); } }
             if(id === 1) playSound('shoot_bolt'); if(id === 3) playSound('shoot_fire'); if(id === 2) playSound('shoot_bolt');
         }
 

@@ -1,8 +1,12 @@
 // server/GameStateManager.js
 // Centralizza la "Verità del Gioco" - unica fonte di autorità per punteggi, kill, e stato della partita
 
+console.log("✅ [SYSTEM] GameStateManager (Server) caricato correttamente.");
+
 class GameStateManager {
     constructor() {
+        console.log("✅ [SYSTEM] GameStateManager (Server) inizializzato.");
+        
         // ===== STATE MANAGEMENT =====
         this.playerKills = {};      // {playerId: killCount}
         this.teamKills = {          // Kill per team
@@ -39,6 +43,8 @@ class GameStateManager {
      * @returns {object} - {success: bool, damage: number, killConfirmed: bool, message: string}
      */
     validateAndApplyHit(shooterId, targetId, spellData) {
+        console.log("⚙️ [SERVER] Validazione colpo in corso... (shooter=" + shooterId + ", target=" + targetId + ", damage=" + (spellData.damage || 0) + ")");
+        
         // Validazione base
         const shooter = this.activePlayers[shooterId];
         const target = this.activePlayers[targetId];

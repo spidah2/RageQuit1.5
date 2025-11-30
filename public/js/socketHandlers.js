@@ -187,6 +187,7 @@ function registerAllSocketHandlers(socket) {
 
     // ===== HEALTH & DAMAGE EVENTS =====
     socket.on('updateHealth', (data) => {
+        console.log("👈 [NETWORK] Ricevuto aggiornamento danno dal Server. Aggiorno UI. (id=" + data.id + ", newHP=" + data.hp + ")");
         if (data.id === myId) {
             playerStats.hp = data.hp;
             updateUI();

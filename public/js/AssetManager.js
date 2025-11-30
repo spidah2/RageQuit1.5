@@ -2,6 +2,8 @@
 // Decoupling completo tra LOGICA (player.js, game.js) e RENDERING (Three.js meshes)
 // Questa classe gestisce: modelli giocatore, mappa, texture, materiali, suoni
 
+console.log("✅ [SYSTEM] AssetManager caricato correttamente.");
+
 class AssetManager {
     constructor(scene) {
         this.scene = scene;

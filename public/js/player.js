@@ -315,7 +315,10 @@ function updateAnimations(delta) {
                 playerLimbs.armR.position.y = 6.0; playerLimbs.armL.position.y = 6.0;
                 playerLimbs.armR.rotation.x = -Math.PI / 2 + Math.sin(time) * 0.05 - (isAttacking ? Math.sin(attackTimer * 2) * 0.5 : 0); 
                 playerLimbs.armR.rotation.z = 0;
-                if(staffContainer.userData.gem) staffContainer.userData.gem.scale.setScalar(isAttacking ? 1.5 : 1.0);
+                // Safety check for staffContainer
+                if(staffContainer && staffContainer.userData && staffContainer.userData.gem) {
+                    staffContainer.userData.gem.scale.setScalar(isAttacking ? 1.5 : 1.0);
+                }
                 playerLimbs.armL.rotation.x = -0.5 + Math.cos(time) * 0.1;
                 playerLimbs.legL.rotation.x = isMoving ? Math.sin(time*3)*0.8 : 0; playerLimbs.legR.rotation.x = isMoving ? -Math.sin(time*3)*0.8 : 0;
             } else if (weaponMode === 'bow') {
@@ -419,6 +422,12 @@ function updateAnimations(delta) {
 function toggleWeaponManual() { toggleWeapon(); }
 
 function toggleWeapon(force) {
+            // SAFETY CHECK: Ensure playerLimbs and weapon containers exist
+            if (!playerLimbs || !playerLimbs.armL || !playerLimbs.armR) {
+                console.warn('⚠️ [TOGGLE WEAPON] PlayerLimbs not initialized yet, deferring toggle');
+                return;
+            }
+            
             // Logic updated: Q cycles Melee/Ranged, E selects Bow
             // This function is now mainly for visual updates based on current `weaponMode`
             
@@ -426,12 +435,13 @@ function toggleWeapon(force) {
             const isRanged = weaponMode === 'ranged';
             const isBow = weaponMode === 'bow';
             
-            swordContainer.visible = isMelee; 
-            staffContainer.visible = isRanged;
-            bowContainer.visible = isBow;
+            // Safety checks for weapon containers before using them
+            if (swordContainer) swordContainer.visible = isMelee;
+            if (staffContainer) staffContainer.visible = isRanged;
+            if (bowContainer) bowContainer.visible = isBow;
             
             // Hide body parts in first-person ranged/bow mode, show only arms
-            playerMesh.visible = isMelee;
+            if (playerMesh) playerMesh.visible = isMelee;
             if (isRanged || isBow) {
                 stopBlocking();
                 euler.x = 0;
@@ -440,7 +450,7 @@ function toggleWeapon(force) {
                 if(playerLimbs.torso) playerLimbs.torso.visible = false;
                 if(playerLimbs.legL) playerLimbs.legL.visible = false;
                 if(playerLimbs.legR) playerLimbs.legR.visible = false;
-                playerMesh.children.forEach(c => { if(c.userData.isTorsoPart) c.visible = false; });
+                if(playerMesh) playerMesh.children.forEach(c => { if(c.userData.isTorsoPart) c.visible = false; });
             } else if (isMelee) {
                 // Reset camera pitch per allineamento orizzonte in melee
                 euler.x = 0.43;
@@ -448,26 +458,31 @@ function toggleWeapon(force) {
                 if(playerLimbs.torso) playerLimbs.torso.visible = true;
                 if(playerLimbs.legL) playerLimbs.legL.visible = true;
                 if(playerLimbs.legR) playerLimbs.legR.visible = true;
-                playerMesh.children.forEach(c => { if(c.userData.isTorsoPart) c.visible = true; });
+                if(playerMesh) playerMesh.children.forEach(c => { if(c.userData.isTorsoPart) c.visible = true; });
             }
             
             playerLimbs.armL.visible = true; playerLimbs.armR.visible = true;
 
             const modeText = isMelee ? "MELEE" : (isRanged ? "RANGED" : "ARCO");
-            document.getElementById('weapon-mode-text').innerText = modeText;
-            document.getElementById('weapon-mode-text').style.color = isMelee ? "orange" : (isRanged ? "cyan" : "lightgreen");
+            const modeEl = document.getElementById('weapon-mode-text');
+            if (modeEl) {
+                modeEl.innerText = modeText;
+                modeEl.style.color = isMelee ? "orange" : (isRanged ? "cyan" : "lightgreen");
+            }
             
             const opacity = isMelee ? '0.4' : '1';
             document.querySelectorAll('.action-slot:not(.slot-q):not(.slot-e):not(.slot-r):not(#slot-5):not(#slot-6):not(#slot-7)').forEach(s => s.style.opacity = opacity);
             
             // Highlight Active Weapon Slot
-            document.getElementById('slot-q').classList.remove('active');
-            document.getElementById('slot-e').classList.remove('active');
+            const slotQ = document.getElementById('slot-q');
+            const slotE = document.getElementById('slot-e');
+            if (slotQ) slotQ.classList.remove('active');
+            if (slotE) slotE.classList.remove('active');
             
             if (isMelee || isRanged) {
-                 document.getElementById('slot-q').classList.add('active');
+                 if (slotQ) slotQ.classList.add('active');
             } else if (isBow) {
-                 document.getElementById('slot-e').classList.add('active');
+                 if (slotE) slotE.classList.add('active');
             }
         }
 

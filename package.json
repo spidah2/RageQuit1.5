@@ -1,7 +1,7 @@
 {
   "name": "ragequit-multiplayer",
-  "version": "1.2.3",
-  "description": "RageQuit - Arena Multiplayer 3D con modalità Squadre",
+  "version": "3.0.0",
+  "description": "RageQuit - Arena Multiplayer 3D con modalità Squadre | v3.0: Standardizzazione grafica completa, sistema skin unificato, correzioni critiche",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

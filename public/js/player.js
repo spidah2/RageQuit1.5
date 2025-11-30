@@ -22,93 +22,72 @@ function createHelmet(parent) {
         }
 
 function createPlayer() {
-            // Defensive: if a player mesh already exists (double init), remove it first
-            if (typeof playerMesh !== 'undefined' && playerMesh) {
-                try { scene.remove(playerMesh); } catch (e) {}
-                playerMesh = null;
-            }
+    // Defensive: se il modello esiste già, rimuovilo
+    if (typeof playerMesh !== 'undefined' && playerMesh) {
+        try { scene.remove(playerMesh); } catch (e) {}
+        playerMesh = null;
+    }
 
-            // Usa il colore di squadra corrente (già impostato dal menu o default)
-            const teamColor = typeof myTeamColor !== 'undefined' ? myTeamColor : 0x2c3e50;
-            console.log('[CREATE PLAYER] Using team color:', teamColor.toString(16));
+    const teamColor = typeof myTeamColor !== 'undefined' ? myTeamColor : 0x2c3e50;
+    console.log('[CREATE PLAYER] Using team color:', teamColor.toString(16));
 
-            playerMesh = new THREE.Group();
-            const armorMat = new THREE.MeshLambertMaterial({ // Lambert invece di Standard per FPS
-                color: teamColor, 
-                emissive: teamColor,
-                emissiveIntensity: 0.3,
-                flatShading: true // Flat shading per FPS
-            }); 
-            const metalMat = new THREE.MeshLambertMaterial({ // Lambert per performance
-                color: 0x95a5a6,
-                flatShading: true
-            });
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(4.5, 6.5, 3), armorMat); torso.position.y = 3.5; playerMesh.add(torso); playerLimbs.torso = torso;
-            const chest = new THREE.Mesh(new THREE.BoxGeometry(4.7, 3.5, 3.2), metalMat); chest.position.y = 5.0; playerMesh.add(chest); chest.userData.isTorsoPart = true; 
-            
-            playerLimbs.head = createHelmet(playerMesh);
-            playerLimbs.helmet = playerLimbs.head;
+    // LOGICA + RENDERING sono DISACCOPPIATI:
+    // 1. AssetManager crea la GRAFICA (mesh 3D)
+    // 2. player.js gestisce la LOGICA (HP, velocità, posizione)
+    // 3. Collegamento: playerMesh = modello visivo, playerStats = dati logica
 
-            const legUpperGeo = new THREE.BoxGeometry(1.6, 3.25, 1.6);
-            const legLowerGeo = new THREE.BoxGeometry(1.6, 3.25, 1.6);
-            
-            playerLimbs.legL = new THREE.Mesh(legUpperGeo, armorMat); playerLimbs.legL.geometry.translate(0, -3.25 / 2, 0); 
-            playerLimbs.legL.position.set(-1.4, 3.5, 0);
-            const bootL = new THREE.Mesh(legLowerGeo, armorMat); bootL.geometry.translate(0, -3.25 / 2, 0);
-            bootL.position.y = -3.25;
-            playerLimbs.legL.add(bootL);
-            playerMesh.add(playerLimbs.legL);
-            playerLimbs.bootL = bootL;
+    // Richiedi il modello grafico all'AssetManager
+    if (typeof assetManager !== 'undefined' && assetManager) {
+        playerMesh = assetManager.getPlayerMesh(teamColor);
+        logGame('[CREATE PLAYER] Using AssetManager', 'GAME');
+    } else {
+        // Fallback se AssetManager non è disponibile
+        logGame('[CREATE PLAYER] AssetManager not available, creating basic mesh', 'GAME', 'WARNING');
+        playerMesh = new THREE.Group();
+        const torso = new THREE.Mesh(
+            new THREE.BoxGeometry(4.5, 6.5, 3),
+            new THREE.MeshLambertMaterial({ color: teamColor, emissive: teamColor })
+        );
+        torso.position.y = 3.5;
+        playerMesh.add(torso);
+    }
 
-            playerLimbs.legR = new THREE.Mesh(legUpperGeo, armorMat); playerLimbs.legR.geometry.translate(0, -3.25 / 2, 0); 
-            playerLimbs.legR.position.set(1.4, 3.5, 0);
-            const bootR = new THREE.Mesh(legLowerGeo, armorMat); bootR.geometry.translate(0, -3.25 / 2, 0);
-            bootR.position.y = -3.25;
-            playerLimbs.legR.add(bootR);
-            playerMesh.add(playerLimbs.legR);
-            playerLimbs.bootR = bootR;
-            
-            const armGeo = new THREE.BoxGeometry(1.4, 6, 1.4);
-            playerLimbs.armL = new THREE.Mesh(armGeo, armorMat); playerLimbs.armL.geometry.translate(0,-2.5,0); playerLimbs.armL.position.set(-3,8.0,0); 
-            playerMesh.add(playerLimbs.armL);
-            playerLimbs.armR = new THREE.Mesh(armGeo, armorMat); playerLimbs.armR.geometry.translate(0,-2.5,0); playerLimbs.armR.position.set(3,8.0,0); 
-            playerMesh.add(playerLimbs.armR);
-            
-            // Posiziona il giocatore alla spawn corretta in base alla modalità
-            const spawnPos = getSpawnPosition ? getSpawnPosition() : new THREE.Vector3(0, 6, 0);
-            playerMesh.position.copy(spawnPos);
-            
-            // Aggiorna il colore dell'armatura con il colore della squadra
-            updatePlayerColor();
-            
-            scene.add(playerMesh);
-        }
+    // Posiziona il giocatore alla spawn corretta
+    const spawnPos = getSpawnPosition ? getSpawnPosition() : new THREE.Vector3(0, 6, 0);
+    playerMesh.position.copy(spawnPos);
+
+    // Aggiungi alla scena
+    scene.add(playerMesh);
+}
 
 function updatePlayerColor() {
-            if (!playerMesh) return;
-            
-            // Aggiorna il colore di tutti i pezzi dell'armatura
-            const currentColor = typeof myTeamColor !== 'undefined' ? myTeamColor : 0x2c3e50;
-            
-            console.log('[PLAYER COLOR] Updating player color to:', currentColor.toString(16));
-            
-            playerMesh.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    // Salta solo il metallo grigio del petto (chest) e il visore/elmo
-                    const isMetalPiece = (child.material.color && child.material.color.getHex() === 0x95a5a6) || 
-                                        (child.material.color && child.material.color.getHex() === 0x555555) ||
-                                        (child.material.color && child.material.color.getHex() === 0x111111);
-                    
-                    if (!isMetalPiece && child.material.color) {
-                        child.material.color.setHex(currentColor);
-                        if (child.material.emissive) {
-                            child.material.emissive.setHex(currentColor);
-                        }
-                        child.material.needsUpdate = true; // Forza aggiornamento materiale
+    if (!playerMesh) return;
+
+    const currentColor = typeof myTeamColor !== 'undefined' ? myTeamColor : 0x2c3e50;
+    console.log('[PLAYER COLOR] Updating player color to:', currentColor.toString(16));
+
+    // Usa AssetManager se disponibile
+    if (typeof assetManager !== 'undefined' && assetManager && typeof assetManager.updatePlayerColor === 'function') {
+        assetManager.updatePlayerColor(playerMesh, currentColor);
+    } else {
+        // Fallback: logica manuale
+        playerMesh.traverse((child) => {
+            if (child.isMesh && child.material) {
+                const isMetalPiece = (child.material.color && child.material.color.getHex() === 0x95a5a6) ||
+                    (child.material.color && child.material.color.getHex() === 0x555555) ||
+                    (child.material.color && child.material.color.getHex() === 0x111111);
+
+                if (!isMetalPiece && child.material.color) {
+                    child.material.color.setHex(currentColor);
+                    if (child.material.emissive) {
+                        child.material.emissive.setHex(currentColor);
                     }
+                    child.material.needsUpdate = true;
                 }
-            });
-        }
+            }
+        });
+    }
+}
 
 function createSword() {
             swordContainer = new THREE.Group();

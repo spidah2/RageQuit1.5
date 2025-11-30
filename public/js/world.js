@@ -1,8 +1,15 @@
-// world.js - Sistema mappa SQUADRE
+// world.js - Sistema mappa (uses AssetManager for asset loading)
 
 function setupWorld() {
-    // Crea solo mappa team
-    createTeamMap();
+    // Usa AssetManager per caricare la mappa
+    if (typeof assetManager !== 'undefined' && assetManager && typeof assetManager.loadMap === 'function') {
+        assetManager.loadMap('team-arena');
+        logGame('[WORLD] Map loaded via AssetManager', 'WORLD');
+    } else {
+        // Fallback: crea mappa direttamente
+        logGame('[WORLD] AssetManager not available, loading map manually', 'WORLD', 'WARNING');
+        createTeamMap();
+    }
 }
 
 // MAPPA SQUADRE - 4 zone colorate per ogni team

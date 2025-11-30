@@ -336,15 +336,16 @@ function fireHitscan() {
                  spawnPos = getStaffTip();
                  
                  // Alza leggermente gli spell per evitare di sparare a terra
-                 // MISSILE(1): NO offset - deve essere perfettamente dritto al mirino
+                 // MISSILE(1): +1.2 per partire da altezza buona ma mantenendo traiettoria dritta
                  // Begone(2), Impale(4): +0.8
                  // Fireball(3): +1.5 (più alto per evitare clipping)
-                 if (type === 3) {
+                 if (type === 1) {
+                    spawnPos.y += 1.2; // Missile parte da altezza giusta
+                 } else if (type === 3) {
                     spawnPos.y += 1.5;
                  } else if (type !== 1) {
                     spawnPos.y += 0.8; // Begone(2), Impale(4)
                  }
-                 // type === 1 (Missile) NON aggiunge offset - deve essere perfetto
                  
                  // Se il player è troppo vicino a un nemico, sposta la spawn più avanti
                  let minEnemyDist = Infinity;

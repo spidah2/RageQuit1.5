@@ -336,10 +336,12 @@ function registerAllSocketHandlers(socket) {
                     // Spawn visible projectile with height offset
                     const spawnPos = new THREE.Vector3(data.origin.x, data.origin.y, data.origin.z);
                     // Alza leggermente tutti gli spell per evitare di sparare a terra
-                    if (data.type === 3) {
+                    if (data.type === 1) {
+                        spawnPos.y += 1.2; // Missile
+                    } else if (data.type === 3) {
                         spawnPos.y += 1.5; // Fireball più alto
                     } else {
-                        spawnPos.y += 0.8; // Missile, Begone, Arrow
+                        spawnPos.y += 0.8; // Begone, Arrow
                     }
                     spawnEnemyProjectile(
                         spawnPos,

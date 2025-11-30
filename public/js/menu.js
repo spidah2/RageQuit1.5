@@ -371,6 +371,12 @@ function reinitializeTeamSelection() {
             // Nascondi selezione squadre e torna al gioco
             teamSelectionScreen.style.display = 'none';
             
+            // Aggiorna subito il colore della squadra nel client (non aspettare il server)
+            window.myTeam = team;
+            window.myTeamColor = TEAM_COLORS[team];
+            if (typeof myTeam !== 'undefined') myTeam = team;
+            if (typeof myTeamColor !== 'undefined') myTeamColor = TEAM_COLORS[team];
+            
             // Riattiva il pointer lock
             if (document.pointerLockElement !== document.body) {
                 try {

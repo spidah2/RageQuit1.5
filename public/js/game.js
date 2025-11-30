@@ -994,6 +994,15 @@ let socket = null;
             playerMesh.position.copy(spawnPos);
             velocity.set(0, 0, 0);
             
+            // IMPORTANTE: Ricrea il giocatore con il colore di squadra corretto
+            // Questo evita i bug di armatura visibile durante il respawn
+            if (typeof createPlayer === 'function') {
+                // Rimuovi il vecchio mesh
+                try { scene.remove(playerMesh); } catch (e) {}
+                // Ricrea il giocatore con il colore squadra corrente
+                createPlayer();
+            }
+            
             // Resetta tutti i flag di movimento
             moveForward = false;
             moveBackward = false;
@@ -1022,13 +1031,7 @@ let socket = null;
             // Mostra il messaggio
             document.getElementById('message').style.display = 'none';
             
-            // Rendi visibile il player - FORZA VISIBILITÀ
-            playerMesh.visible = true;
-            playerMesh.traverse((child) => {
-                child.visible = true;
-            });
-            
-            console.log('[CLIENT] respawnPlayer - playerMesh.visible:', playerMesh.visible, 'isDead:', playerStats.isDead);
+            console.log('[CLIENT] respawnPlayer - recreated with team color:', window.myTeamColor?.toString(16), 'isDead:', playerStats.isDead);
             
             // Notifica il server del respawn e richiedi lo stato aggiornato di tutti i player
             if (socket && socket.connected) {

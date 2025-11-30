@@ -29,7 +29,150 @@ class AssetManager {
             return this.cache.playerMeshes[cacheKey].clone();
         }
 
-        // Crea nuovo modello
+        // Determina se usare skin specializzata basato su teamColor
+        const isRedTeam = (teamColor === 0x8B0000); // CARNAGE team
+        
+        // Crea il modello appropriato
+        const playerGroup = isRedTeam 
+            ? this._createWizardMesh(teamColor)      // Skin speciale "Mago" per CARNAGE
+            : this._createStandardArmorMesh(teamColor); // Armatura standard per altri team
+
+        // Cache il template
+        this.cache.playerMeshes[cacheKey] = playerGroup;
+        
+        logGame(`[AssetManager] Created player mesh: ${cacheKey} (${isRedTeam ? 'WIZARD' : 'STANDARD'})`, 'ASSET');
+        return playerGroup;
+    }
+
+    /**
+     * Crea un modello "Mago" specializzato (con tunica e cappello)
+     * @private
+     */
+    _createWizardMesh(teamColor) {
+        const playerGroup = new THREE.Group();
+        
+        // Materiali per il mago
+        const tunicaMat = new THREE.MeshLambertMaterial({
+            color: teamColor,
+            emissive: teamColor,
+            emissiveIntensity: 0.4,
+            flatShading: true
+        });
+        const staffMat = new THREE.MeshLambertMaterial({
+            color: 0x8B4513, // Marrone legno
+            flatShading: true
+        });
+        const goldMat = new THREE.MeshLambertMaterial({
+            color: 0xFFD700,
+            emissive: 0xFFD700,
+            emissiveIntensity: 0.5,
+            flatShading: true
+        });
+
+        // TUNICA (cilindro al posto del torso)
+        const tunica = new THREE.Mesh(
+            new THREE.CylinderGeometry(2.5, 3.0, 6.5, 16),
+            tunicaMat
+        );
+        tunica.position.y = 3.5;
+        playerGroup.add(tunica);
+        tunica.userData.partName = 'torso';
+
+        // CINTURA (ORO - decorativa)
+        const belt = new THREE.Mesh(
+            new THREE.CylinderGeometry(3.1, 3.1, 0.8, 16),
+            goldMat
+        );
+        belt.position.y = 5.0;
+        playerGroup.add(belt);
+        belt.userData.partName = 'belt';
+
+        // HEAD (sfera per mago)
+        const head = this._createWizardHeadMesh(tunicaMat, goldMat);
+        head.position.y = 9.5;
+        playerGroup.add(head);
+
+        // GAMBE (cilindri snelli sotto tunica)
+        const legGeo = new THREE.CylinderGeometry(0.8, 0.8, 3.25, 12);
+        
+        const legL = new THREE.Mesh(legGeo, tunicaMat);
+        legL.position.set(-1.2, 1.5, 0);
+        playerGroup.add(legL);
+        legL.userData.partName = 'legL';
+
+        const legR = new THREE.Mesh(legGeo, tunicaMat);
+        legR.position.set(1.2, 1.5, 0);
+        playerGroup.add(legR);
+        legR.userData.partName = 'legR';
+
+        // BRACCIA (cilindri per bracccia da mago)
+        const armGeo = new THREE.CylinderGeometry(0.7, 0.6, 6, 12);
+        
+        const armL = new THREE.Mesh(armGeo, tunicaMat);
+        armL.position.set(-2.8, 7.0, 0);
+        armL.rotation.z = Math.PI / 6; // Leggermente inclinato
+        playerGroup.add(armL);
+        armL.userData.partName = 'armL';
+
+        const armR = new THREE.Mesh(armGeo, tunicaMat);
+        armR.position.set(2.8, 7.0, 0);
+        armR.rotation.z = -Math.PI / 6; // Inclinato opposto
+        playerGroup.add(armR);
+        armR.userData.partName = 'armR';
+
+        return playerGroup;
+    }
+
+    /**
+     * Crea la testa con cappello a punta per il mago
+     * @private
+     */
+    _createWizardHeadMesh(tunicaMat, goldMat) {
+        const head = new THREE.Group();
+        
+        // Testa (sfera)
+        const headGeom = new THREE.SphereGeometry(1.6, 12, 12);
+        const headMesh = new THREE.Mesh(headGeom, tunicaMat);
+        headMesh.scale.set(0.95, 1.0, 0.95);
+        head.add(headMesh);
+        headMesh.userData.partName = 'head';
+
+        // Cappello a punta (cono)
+        const hatGeom = new THREE.ConeGeometry(1.8, 3.5, 16);
+        const hatMat = new THREE.MeshLambertMaterial({
+            color: 0x1a0033, // Viola scuro
+            emissive: 0x550055,
+            emissiveIntensity: 0.3,
+            flatShading: true
+        });
+        const hat = new THREE.Mesh(hatGeom, hatMat);
+        hat.position.y = 2.0;
+        head.add(hat);
+        hat.userData.partName = 'hat';
+
+        // Stella d'oro in cima al cappello
+        const starGeom = new THREE.IcosahedronGeometry(0.5, 1);
+        const star = new THREE.Mesh(starGeom, goldMat);
+        star.position.y = 3.7;
+        head.add(star);
+        star.userData.partName = 'hatStar';
+
+        // Benda dorata attorno alla base del cappello
+        const bandGeom = new THREE.CylinderGeometry(2.0, 1.95, 0.6, 16);
+        const band = new THREE.Mesh(bandGeom, goldMat);
+        band.position.y = 1.2;
+        head.add(band);
+        band.userData.partName = 'hatBand';
+
+        head.userData.partName = 'head';
+        return head;
+    }
+
+    /**
+     * Crea il modello standard di armatura (originale)
+     * @private
+     */
+    _createStandardArmorMesh(teamColor) {
         const playerGroup = new THREE.Group();
         
         // Materiali
@@ -102,10 +245,6 @@ class AssetManager {
         playerGroup.add(armR);
         armR.userData.partName = 'armR';
 
-        // Cache il template
-        this.cache.playerMeshes[cacheKey] = playerGroup;
-        
-        logGame(`[AssetManager] Created player mesh: ${cacheKey}`, 'ASSET');
         return playerGroup;
     }
 

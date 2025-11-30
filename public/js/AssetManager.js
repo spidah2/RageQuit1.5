@@ -131,17 +131,20 @@ class AssetManager {
         legR.userData.partName = 'legR';
 
         // BRACCIA (cilindri per bracccia da mago)
+        // CRITICAL: CylinderGeometry pivot è al centro, ma vogliamo ruotare dalla spalla
+        // Traslare la geometria so che il cilindro scende dalla spalla (top center)
         const armGeo = new THREE.CylinderGeometry(0.7, 0.6, 6, 12);
+        armGeo.translate(0, -3, 0); // Scendi metà lunghezza so che pivot sia alla spalla
         
         const armL = new THREE.Mesh(armGeo, tunicaMat);
         armL.position.set(-2.8, 7.0, 0);
-        armL.rotation.z = Math.PI / 6; // Leggermente inclinato
+        // NO rotation.z - rotazione inclinata interferisce con player.js animation
         playerGroup.add(armL);
         armL.userData.partName = 'armL';
-
+        
         const armR = new THREE.Mesh(armGeo, tunicaMat);
         armR.position.set(2.8, 7.0, 0);
-        armR.rotation.z = -Math.PI / 6; // Inclinato opposto
+        // NO rotation.z - rotazione inclinata interferisce con player.js animation
         playerGroup.add(armR);
         armR.userData.partName = 'armR';
 

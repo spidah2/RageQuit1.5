@@ -327,24 +327,28 @@ function fireHitscan() {
             const camDir = new THREE.Vector3(); 
             camera.getWorldDirection(camDir);
             
-            if(type === 5) {
+            // CRITICAL FIX: Bolt (ID 1) deve partire dal CENTRO della camera, non da getStaffTip()
+            // Questo assicura che vada esattamente dove guarda il player (come un FPS)
+            if(type === 1) {
+                // Missile/Bolt: parte dal centro della visuale (come un FPS)
+                spawnPos = camera.position.clone().add(camDir.clone().multiplyScalar(1));
+                spawnPos.y += 0.5; // Leggermente sopra gli occhi
+            } else if(type === 5) {
                  // Freccia parte dalla camera, leggermente in avanti
                  spawnPos = camera.position.clone().add(camDir.clone().multiplyScalar(2));
                  spawnPos.y += 0.5; // Alza un po' dalla camera
             } else {
-                 // Spell parte dalla punta dello staff
+                 // Spell parte dalla punta dello staff (spells 2, 3, 4)
                  spawnPos = getStaffTip();
                  
                  // Alza leggermente gli spell per evitare di sparare a terra
-                 // MISSILE(1): +1.2 per partire da altezza buona ma mantenendo traiettoria dritta
-                 // Begone(2), Impale(4): +0.8
+                 // Begone(2): +0.8
                  // Fireball(3): +1.5 (più alto per evitare clipping)
-                 if (type === 1) {
-                    spawnPos.y += 1.2; // Missile parte da altezza giusta
+                 // Impale(4): non è projectile ma hitscan
+                 if (type === 2) {
+                    spawnPos.y += 0.8;
                  } else if (type === 3) {
                     spawnPos.y += 1.5;
-                 } else if (type !== 1) {
-                    spawnPos.y += 0.8; // Begone(2), Impale(4)
                  }
                  
                  // Se il player è troppo vicino a un nemico, sposta la spawn più avanti

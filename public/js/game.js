@@ -1,41 +1,21 @@
-// GLOBAL VARIABLES - Accessible to all modules (network.js, socketHandlers.js, etc.)
-let socket = null;
-const otherPlayers = {}; 
-let myId = null;
-let myUsername = null;
-let myTeamColor = 0x2c3e50; // Colore dell'armatura del giocatore
-let myGameMode = 'team'; // Solo modalità team
-let myTeam = null; // 'red', 'black', 'green', 'purple'
-let isPvEMode = false; // Flag per modalità PvE
-let aiMonster = null; // Riferimento al mostro IA
-let myKills = 0; // Kill del giocatore
-const playerKills = {}; // Kill di tutti i player {playerId: kills}
-const teamKills = {red: 0, black: 0, green: 0, purple: 0}; // Kill per squadra
-
 // Verifica che THREE.js sia caricato
 if (typeof THREE === 'undefined') {
-    console.warn('[GAME] THREE.js not yet loaded, waiting...');
-    // Aspetta che THREE.js sia caricato
-    if (typeof window.THREE_LOADED !== 'undefined') {
-        window.THREE_LOADED.then(() => {
-            console.log('[GAME] THREE.js ready, version r' + THREE.REVISION);
-            initGame();
-        }).catch((err) => {
-            console.error('[GAME] Failed to load THREE.js:', err);
-            document.body.innerHTML = '<h1 style="color:red;">Failed to load game - THREE.js unavailable</h1>';
-        });
-    } else {
-        throw new Error('[GAME] THREE.js not loaded! Check script loading order.');
-    }
-} else {
-    console.log('[GAME] THREE.js ready, version r' + THREE.REVISION);
-    initGame();
+    throw new Error('[GAME] THREE.js not loaded! Check script loading order.');
 }
+console.log('[GAME] THREE.js ready, version r' + THREE.REVISION);
 
-function initGame() {
-        // Inizializza variabili globali
-        myUsername = loadUsername() || "Player";
-        myKills = loadKills(); // Carica da localStorage
+let socket = null;
+        const otherPlayers = {}; 
+        let myId = null;
+        let myUsername = loadUsername() || "Player";
+        let myTeamColor = 0x2c3e50; // Colore dell'armatura del giocatore
+        let myGameMode = 'team'; // Solo modalità team
+        let myTeam = null; // 'red', 'black', 'green', 'purple'
+        let isPvEMode = false; // Flag per modalità PvE
+        let aiMonster = null; // Riferimento al mostro IA
+        let myKills = loadKills(); // Carica da localStorage
+        const playerKills = {}; // Kill di tutti i player {playerId: kills}
+        const teamKills = {red: 0, black: 0, green: 0, purple: 0}; // Kill per squadra
         
         const WORLD_SEED = 123456;
         let seed = WORLD_SEED;
@@ -1084,8 +1064,6 @@ function initGame() {
         
         // Esponi respawnPlayer globalmente per poterla chiamare da socketHandlers
         window.respawnPlayer = respawnPlayer;
-        window.addToLog = addToLog;
-        window.updateKillCounter = updateKillCounter;
         
         // Ottieni la posizione di spawn per la squadra
         function getSpawnPosition() {
@@ -1582,4 +1560,3 @@ function initGame() {
         
         // Non inizializzare subito - aspetta che menu.js chiami startGame()
         // init();
-} // Fine della funzione initGame()

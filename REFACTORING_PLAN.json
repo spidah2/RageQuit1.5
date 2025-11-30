@@ -1,0 +1,990 @@
+{
+  "metadata": {
+    "project": "RageQuit1.5",
+    "date": "2025-11-29",
+    "version": "1.0",
+    "description": "Piano dettagliato di refactoring per RageQuit 1.5 - Analisi completa di sistemi, dipendenze e azioni specifiche"
+  },
+  "systems": [
+    {
+      "name": "Menu & Autenticazione",
+      "files": [
+        "public/js/menu.js",
+        "public/index.html"
+      ],
+      "keyFunctions": [
+        "initMenu() - line 134",
+        "startGame(mode) - line 251",
+        "toggleMenuMusic() - line 23",
+        "updateTeamCounts(counts) - line 311",
+        "reinitializeTeamSelection() - line 325",
+        "playErrorSound() - line 99",
+        "showUsernameError() - line 54"
+      ],
+      "keyVariables": [
+        "menuSocket - line 6 (connessione socket per menu)",
+        "selectedTeam - line 4 (team selezionato)",
+        "playerUsername - line 5 (username inserito)",
+        "currentGameMode - line 3 (modalità gioco)",
+        "TEAM_COLORS - line 8 (costante condivisa con server)",
+        "menuMusicState - line 18 (stato musica menu)"
+      ],
+      "issues": [
+        "DUPLICAZIONE: TEAM_COLORS definito in menu.js line 8 e in server.js line 16 - non sincronizzati",
+        "MESCOLANZA: menuSocket (line 6) è disconnesso da socket di game.js - duplicazione connessione",
+        "LOGICA SPARSA: Audio menu (toggleMenuMusic) non usa sistema audio centralizzato come game.js",
+        "RIGIDEZZA: reinitializeTeamSelection() crea event listener hardcoded per team (line 358-380) - non scalabile",
+        "MANCANZA FEEDBACK: showUsernameError() ripete validazione già fatta (playErrorSound e vibrazione)",
+        "CONDIVISIONE GLOBALE: window.myTeam, window.myTeamColor passati via window object - pattern rischioso"
+      ],
+      "cleanupActions": [
+        "AZIONE 1: Crea modulo 'constants.js' con TEAM_COLORS, GAME_SETTINGS - importa in menu.js e server.js",
+        "AZIONE 2: Consolida socket listeners - trasferisci menuSocket listeners in network.js, riutilizza socket globale",
+        "AZIONE 3: Refactor toggleMenuMusic() per usare AudioManager (da creare) - unifica logica audio game/menu",
+        "AZIONE 4: Genera event listener team dinamicamente in reinitializeTeamSelection() loop (line 358-380)",
+        "AZIONE 5: Centralizza validazione username in utility function - rimuovi duplicazione playErrorSound/showUsernameError",
+        "AZIONE 6: Sostituisci window.myX con modulo 'PlayerState' - export myTeam, myTeamColor, myUsername"
+      ]
+    },
+    {
+      "name": "Sistema Rete & Multiplayer",
+      "files": [
+        "public/js/network.js",
+        "server.js"
+      ],
+      "keyFunctions": [
+        "initMultiplayer() - network.js line 33",
+        "sendPositionUpdate() - network.js line 12",
+        "addOtherPlayer(info) - network.js line 435",
+        "removeOtherPlayer(id) - network.js line 593",
+        "checkLogin() - network.js line 627"
+      ],
+      "keyVariables": [
+        "socket - game.js line 7 (connessione socket globale)",
+        "otherPlayers - game.js line 8 (cache player remoti)",
+        "players - server.js line 13 (cache server player)",
+        "lastPositionSent - network.js line 8 (throttling posizione)",
+        "POSITION_UPDATE_RATE - network.js line 9 (50ms)",
+        "recentlyRemoved - network.js line 4 (dedupe window)",
+        "positionBuffer - game.js line 35 (buffer interpolazione)",
+        "INTERPOLATION_DELAY - game.js line 36 (100ms)"
+      ],
+      "issues": [
+        "LISTENER DUPLICATI: socket.on('playerMoved') in network.js line 193 non sincronizza con playerTeamChanged handlers",
+        "RACE CONDITION: addOtherPlayer() line 435 non verifica se player già esiste prima di creazione mesh",
+        "MEMORY LEAK: recentlyRemoved non ha cleanup - keys accumulate indefinitamente",
+        "INCOERENZA: positionBuffer in game.js mai usato per interpolazione effettiva - dichiarato ma non implementato",
+        "LOGICA SPARSA: Hit validation sia client (spells.js) che server (server.js) - codice duplicato",
+        "SINCRONIZZAZIONE: playerTeamChanged riceve dati incompleti - manca aggiornamento visuale colore armatura",
+        "BROADCASTING: playerDied e playerRespawned emessi multipli volte (righe server 194, 233, 379) - inefficiente"
+      ],
+      "cleanupActions": [
+        "AZIONE 7: Rimuovi recentlyRemoved dedupe - usa Set con timeout automatico invece di object (network.js line 4-5)",
+        "AZIONE 8: Implementa interpolazione posizione in updatePhysics() usando positionBuffer - attualmente inutilizzato",
+        "AZIONE 9: Consolida hit validation - crea HitValidator.js condiviso, rimuovi duplicazione client/server",
+        "AZIONE 10: Centralizza socket.on handlers - estrai tutti i listener in network.js nella funzione initMultiplayer()",
+        "AZIONE 11: Sincronizza playerTeamChanged con aggiornamento mesh color - network.js line 159 non aggiorna visuale",
+        "AZIONE 12: Crea emit wrapper per playerDied/playerRespawned - evita emissioni duplicate (server.js line 194, 233, 379)",
+        "AZIONE 13: Implementa timeout auto-cleanup per recentlyRemoved - ogni entry scade dopo DEDUPE_WINDOW_MS"
+      ]
+    },
+    {
+      "name": "Sistema Gioco Principale",
+      "files": [
+        "public/js/game.js"
+      ],
+      "keyFunctions": [
+        "main animation loop (innerhalb game loop) - line 1200-1400 (stimato)",
+        "animate() - entry point renderizzazione",
+        "initScene() - setup THREE.js",
+        "updateUI() - aggiornamento UI stats",
+        "updatePhysics(delta) - player.js line 436"
+      ],
+      "keyVariables": [
+        "playerStats - line 31 (hp, mana, stamina, isDead)",
+        "SETTINGS - line 49 (tutte le costanti gameplay)",
+        "matchStats - line 42 (kill, death, accuracy)",
+        "velocity - line 30 (vettore velocità player)",
+        "castingState - line 37 (stato incantesimi)",
+        "playerMesh - line 16 (mesh visuale player)",
+        "scene, camera, renderer - line 15",
+        "projectiles, obstacles, particles - line 25-27"
+      ],
+      "issues": [
+        "VARIABILI GLOBALI ECCESSIVE: playerStats, velocity, castingState all'livello file scope - 50+ variabili globali",
+        "MONOLITE: game.js 1561 righe - gestisce: input, physics, rendering, UI, audio, spell system",
+        "MANCANZA ARCHITETTURA: Non c'è separazione concerns - tutto mescolato nella stessa funzione animate()",
+        "INCOERENZA STATI: playerStats.isDead, playerMesh.visible, playerStats.isFalling - multipli boolean di stato",
+        "LISTENER DUPLICATI: Keyboard handlers per spell (Digit1, KeyX, etc.) definiti sparsi per il file",
+        "MAGIC NUMBERS: Valori hardcoded ovunque - 100, 50, 200, etc. senza costanti",
+        "MANCANZA CLEANUP: Event listener mai rimossi - possibili memory leak su connessione/disconnessione"
+      ],
+      "cleanupActions": [
+        "AZIONE 14: Crea PlayerManager.js - gestisci playerStats, velocity, castingState in classe unica",
+        "AZIONE 15: Estrai GameState.js - centralizza variabili globali (myId, myUsername, myTeam, matchStats)",
+        "AZIONE 16: Refactor animate() - dividi in updateLogic(delta), updatePhysics(delta), render() separati",
+        "AZIONE 17: Crea InputManager.js - raccogli tutti addEventListener per keyboard/mouse in classe",
+        "AZIONE 18: Estrai costanti in SETTINGS - sposta magic numbers (100, 50, 200) in SETTINGS object",
+        "AZIONE 19: Implementa cleanup su disconnect - removeEventListener() per tutti gli handler al menu",
+        "AZIONE 20: Crea UIManager.js - centralizza updateUI(), updateKillCounter(), updateActionBarUI()"
+      ]
+    },
+    {
+      "name": "Sistema Incantesimi & Attacchi",
+      "files": [
+        "public/js/spells.js",
+        "public/js/player.js"
+      ],
+      "keyFunctions": [
+        "startCasting(spellId, type, key) - spells.js line 3",
+        "stopCasting(key) - spells.js line 23",
+        "executeAttack(id) - spells.js line 56",
+        "performConversion(type) - spells.js line 79",
+        "performHeal() - spells.js line 132",
+        "spawnProjectile(type) - spells.js line 270",
+        "updateProjectiles(delta) - spells.js line 360",
+        "fireHitscan() - spells.js line 194",
+        "swingSword() - spells.js line 565"
+      ],
+      "keyVariables": [
+        "castingState - game.js line 37 (active, timer, maxTime, currentSpell)",
+        "projectiles - game.js line 25 (array projectili attivi)",
+        "activeConversions - game.js line 38 (array conversioni attive)",
+        "lastAttackTime, lastHealTime, lastConversionTime - game.js line 36-40",
+        "currentSpell - game.js line 17 (spell selezionato)"
+      ],
+      "issues": [
+        "DUPLICAZIONE EMIT: socket.emit('playerAttack') chiamato in executeAttack (line 75), spawnProjectile (line 327), fireHitscan (line 262)",
+        "VALIDAZIONE SPARSE: Check mana in startCasting (line 8-9) ma non in executeAttack() - incoerenza",
+        "COOLDOWN SPARSI: lastAttackTime, lastHealTime, lastConversionTime variabili separate - pattern non scalabile",
+        "GESTIONE STATO: castingState è object con troppi campi - difficile tracciare (active, timer, maxTime, ready, keyHeld)",
+        "LOGICA DUPLICATA: Controllo isDead in startCasting (line 3) e executeAttack (line 56) - ripetuto",
+        "ARRAY ACCUMULAZIONE: activeConversions never cleaned up fully - possibili ghost conversions",
+        "MANCANZA BILANCIAMENTO: Costi mana hardcoded in SETTINGS ma validazione manca in alcuni spell"
+      ],
+      "cleanupActions": [
+        "AZIONE 21: Consolida socket.emit spell - crea SpellEmitter.js con funzione centralizzata",
+        "AZIONE 22: Crea CooldownManager.js - unifica lastAttackTime, lastHealTime, lastConversionTime in Map<spellId, timestamp>",
+        "AZIONE 23: Refactor castingState - sostituisci object con CastingState class (constructor, getProgress(), isReady())",
+        "AZIONE 24: Centra validazione mana/stamina - crea Validator.js con canCast(spellId) che controlla tutto",
+        "AZIONE 25: Implementa Spell class - eredita startCasting(), execute(), getInfo() - consenti polimorfismo",
+        "AZIONE 26: CleanupactiveConversions - aggiungi timeout auto-remove per conversioni scadute",
+        "AZIONE 27: Rimuovi isDead check da spell function - delega a CastingState o PlayerManager"
+      ]
+    },
+    {
+      "name": "Sistema Giocatore & Animazioni",
+      "files": [
+        "public/js/player.js",
+        "public/js/world.js"
+      ],
+      "keyFunctions": [
+        "createPlayer() - player.js line 24",
+        "updatePlayerColor() - player.js line 87",
+        "createSword(), createStaff(), createBow() - player.js line 113, 130, 138",
+        "updateAnimations(delta) - player.js line 246",
+        "updatePhysics(delta) - player.js line 436",
+        "toggleWeapon(force) - player.js line 361",
+        "updateCamera() - player.js line 526"
+      ],
+      "keyVariables": [
+        "playerMesh - group principale giocatore",
+        "playerLimbs - object con riferimenti arti (head, torso, armL, armR, legL, legR, helmet)",
+        "swordContainer, staffContainer, bowContainer - armi",
+        "shieldMesh - scudo",
+        "moveForward, moveBackward, moveLeft, moveRight - boolean input",
+        "weaponMode - 'melee', 'ranged', 'bow'",
+        "isBlocking - stato blocco"
+      ],
+      "issues": [
+        "MESH SPARSI: swordContainer, staffContainer, bowContainer, shieldMesh variabili globali non gestite insieme",
+        "INCOERENZA COLOR: updatePlayerColor() (line 87) controlla manualmente colore - duplica logica createPlayer()",
+        "TRAVERSAL INEFFICIENTE: updatePlayerColor() traversa ENTIRE mesh tree per aggiornare colore - O(n)",
+        "CREAZIONE DUPLICATA: createSword/Staff/Bow creano mesh ma non le stored in structure unificata",
+        "WEAPON SWITCH MANUALE: toggleWeapon() line 361 gestisce visibility manualmente - 100+ righe sparse",
+        "ANIMAZIONE HARDCODED: Animation state machine non esiste - if/else nella updateAnimations()",
+        "CAMERA OFFSET: Camera segue playerMesh con offset fisso - difficile customizzare"
+      ],
+      "cleanupActions": [
+        "AZIONE 28: Crea WeaponManager.js - gestisci swordContainer, staffContainer, bowContainer in unica classe",
+        "AZIONE 29: Unifica createPlayer() - crea PlayerBuilder class per construct limb-by-limb",
+        "AZIONE 30: Crea ColorUpdater.js - cache limb materials per updatePlayerColor O(1) invece di traversal",
+        "AZIONE 31: Implementa AnimationStateMachine.js - sostituisci if/else manuale con state transitions",
+        "AZIONE 32: Refactor toggleWeapon() - usa WeaponManager per switch visibility, placement",
+        "AZIONE 33: Crea CameraController.js - gestisci camera offset, follow, FOV customization",
+        "AZIONE 34: Consolida mesh references - playerLimbs sia parte di WeaponManager, non globale"
+      ]
+    },
+    {
+      "name": "Sistema Mondo & Mappe",
+      "files": [
+        "public/js/world.js",
+        "public/js/instancing.js"
+      ],
+      "keyFunctions": [
+        "setupWorld() - world.js line 3",
+        "createTeamMap() - world.js line 9",
+        "createTeamMap() paint floor texture - world.js line 27",
+        "createInstancedObstacles() - instancing.js line 6",
+        "addLODToInstanced() - instancing.js line 56",
+        "createPineTree(), createRock(), createFantasyHouse() - world.js line 296, 260, 312"
+      ],
+      "keyVariables": [
+        "obstacles - array ostacoli per collision",
+        "lodObjects - array per LOD system",
+        "instancedMeshes - cache mesh instanziati",
+        "random() - seeded RNG con WORLD_SEED",
+        "WORLD_SEED - world.js (non in constants)"
+      ],
+      "issues": [
+        "TEXTURE GENERATA: Floor texture generata proceduralmente line 27 ogni volta - inefficiente",
+        "INCONSISTENZA SEED: WORLD_SEED in game.js line 20 ma random() seed non inizializzato correttamente",
+        "MANCANZA CACHE: createTeamMap() ricrea zone colorate, alberi, rocce ogni volta - no reuse",
+        "LOD INCOMPLETO: LOD system dichiarato (lodObjects line 24) ma mai usato in updatePhysics",
+        "INSTANCING NON USATO: createInstancedObstacles() in instancing.js ma non chiamato da setupWorld()",
+        "COLLISION SPARSA: obstacles array creato ma non sincronizzato con mesh visibility",
+        "PERFORMANCE: Ogni albero, roccia, casa è mesh separato - no batching per piccoli oggetti"
+      ],
+      "cleanupActions": [
+        "AZIONE 35: Cache texture floor - genera una volta al boot, riusa di load map",
+        "AZIONE 36: Implementa WorldBuilder.js - parametrizza createTeamMap() con config (zone, obstacles, trees)",
+        "AZIONE 37: Consolida WORLD_SEED in constants.js - usa globale valido per reproducibilità",
+        "AZIONE 38: Integra instancing in setupWorld() - chiama createInstancedObstacles() per rocce e alberi",
+        "AZIONE 39: Implementa LOD in updatePhysics() - disabilita dettagli lontani (lodObjects)",
+        "AZIONE 40: Sincronizza obstacles con mesh - crea ObstacleManager per track sia fisica che visuale",
+        "AZIONE 41: Rimuovi hardcoded zone positions - parametrizza teamZones array nel config"
+      ]
+    },
+    {
+      "name": "Sistema AI (PvE Mostro)",
+      "files": [
+        "public/js/ai.js"
+      ],
+      "keyFunctions": [
+        "createAIMonster() - ai.js line 3",
+        "updateAIMonster(delta) - ai.js line 92",
+        "aiMonsterCastSpell() - ai.js line 137",
+        "aiMonsterAttack() - ai.js line 225",
+        "damageAIMonster(damage) - ai.js line 247"
+      ],
+      "keyVariables": [
+        "aiMonster - game.js line 13 (riferimento mostro)",
+        "isPvEMode - game.js line 12 (flag modalità PvE)"
+      ],
+      "issues": [
+        "MANCANZA INTEGRAZIONE: aiMonster creato ma isPvEMode mai usato effettivamente - flag senza logica",
+        "DUPLICATE SPAWN LOGIC: createAIMonster() duplica mesh creation come createPlayer() - stesso codice",
+        "PROJECTILE DUPLICATI: aiMonsterCastSpell() crea projectili manualmente - non usa spawnProjectile()",
+        "STATO INCOMPLETO: aiMonster object non ha reference ai mesh weapon - difficile sincronizzare visuale",
+        "DAMAGE NON TRACCIATO: damageAIMonster() non sincronizza HP con server - solo client-side",
+        "DEATH LOGIC MANCA: aiMonster.state === 'dead' ma nessuno chiama morte o remove mesh",
+        "DISTANCE CALC RIPETUTO: distance() calcolato manualmente - no utility function"
+      ],
+      "cleanupActions": [
+        "AZIONE 42: Sposta AI check in GameMode.js - isPvEMode controlla quale AIManager istanziare",
+        "AZIONE 43: Refactor createAIMonster() per usare PlayerBuilder (condiviso con createPlayer())",
+        "AZIONE 44: Centralizza projectile spawn - aiMonsterCastSpell() chiama spawnProjectile(type, owner='ai')",
+        "AZIONE 45: Crea AIMonster class - estendi PlayerManager con state machine, spell casting",
+        "AZIONE 46: Sincronizza AI death - emit socket event per notificare kill ai altri player",
+        "AZIONE 47: Crea DistanceCalculator utility - riusa in AI, Spell, Physics checks",
+        "AZIONE 48: Implementa AIWeaponManager - traccia weapon visuals come per player reale"
+      ]
+    },
+    {
+      "name": "Sistema Audio",
+      "files": [
+        "public/js/game.js (playSound function)",
+        "public/js/menu.js (toggleMenuMusic, playErrorSound)",
+        "public/index.html (menu-music element)"
+      ],
+      "keyFunctions": [
+        "playSound(type, pos) - game.js line 835",
+        "toggleMenuMusic() - menu.js line 23",
+        "playErrorSound() - menu.js line 99",
+        "startBackgroundMusic() - game.js line 877"
+      ],
+      "keyVariables": [
+        "audioCtx - game.js (AudioContext globale)",
+        "audioEnabled - game.js line 606 (flag audio game)",
+        "backgroundMusicOscillators - game.js line 634 (array oscillatori musica)",
+        "menuMusicState - menu.js line 18 (flag musica menu)"
+      ],
+      "issues": [
+        "DUPLICAZIONE AUDIO CONTEXT: Due istanze AudioContext - game.js line 605 e menu.js line 100",
+        "INCOERENZA TOGGLE: audioEnabled in game, menuMusicState in menu - no stato unificato",
+        "MANCA CLEANUP: backgroundMusicOscillators mai completamente puliti - possibile audio ghosting",
+        "PLAYSTYLE DIVERSI: playSound() crea oscillatore per OGNI suono - no sound pool o cache",
+        "HARDCODED PATHS: Menu music via <audio> tag HTML, game music sintetica - inconsistenza",
+        "VOLUME INCONSISTENTE: playSound() volume calcolato (0.1), ma menuMusic volume fisso (0.15)",
+        "MASTER VOLUME MANCA: Nessun volume slider master - solo on/off"
+      ],
+      "cleanupActions": [
+        "AZIONE 49: Crea AudioManager.js - singleton centralizzato con audioCtx, audioEnabled, volume",
+        "AZIONE 50: Consolida AudioContext - riusa istanza unica (game.js + menu.js)",
+        "AZIONE 51: Implementa SoundPool.js - crea pool oscillatori/gainNode per reuso, no GC",
+        "AZIONE 52: Unifica music playback - carica menu music da file, sintetizza in game (o vice versa)",
+        "AZIONE 53: Centralizza volume - AudioManager espone getVolume(), setVolume(), getMuted()",
+        "AZIONE 54: Cleanup backgroundMusicOscillators - implementa stop() method che pulisce array",
+        "AZIONE 55: Aggiungi volume slider UI - collega a AudioManager.setVolume() con persistenza localStorage"
+      ]
+    },
+    {
+      "name": "Sistema UI & DOM",
+      "files": [
+        "public/index.html",
+        "public/js/game.js (UI sections)",
+        "public/css/styles.css"
+      ],
+      "keyFunctions": [
+        "updateUI() - game.js (aggiorna stats display)",
+        "updateKillCounter() - game.js line 540",
+        "addToLog(msg) - game.js (chat log)",
+        "addChatMessage(username, text) - game.js line 255",
+        "updateActionBarUI() - game.js (action bar labels)"
+      ],
+      "keyVariables": [
+        "loginModal, mainMenu, teamSelectionScreen - DOM elements",
+        "uiContainer, chatContainer - draggable UI",
+        "document.getElementById('*') - sparse DOM queries"
+      ],
+      "issues": [
+        "SELETTORI RIPETUTI: document.getElementById() chiamato 50+ volte senza caching",
+        "HARDCODED SELECTORS: HTML structure hardcoded in JS - cambio HTML rompe JS",
+        "DRAG LISTENERS DUPLICATI: isDragging e isChatDragging - pattern non scalabile per ulteriori UI",
+        "FLOATING TEXT ACCUMULAZIONE: floatingTexts array mai limitato - performance degrade nel tempo",
+        "INNHERHTML PERICOLOSO: setInnerHTML su user input (chat) - XSS vulnerability",
+        "LOG SPAM: addToLog aggiunge a log infinito - no limit, possibile memory leak",
+        "COLOR HARDCODED: Team colors in HTML/CSS, non sincronizzati con TEAM_COLORS JS"
+      ],
+      "cleanupActions": [
+        "AZIONE 56: Crea DOMManager.js - cache tutti document.getElementById() in mappa",
+        "AZIONE 57: Centralizza draggable logic - crea DragManager class per uiContainer, chatContainer",
+        "AZIONE 58: Limita floatingTexts - mantieni max 20 active, riusa pool",
+        "AZIONE 59: Sanitize innerHTML in chat - usa textContent per username, sanitize text parameter",
+        "AZIONE 60: Implementa LogManager - limita log a max 100 entries, offscreen cache",
+        "AZIONE 61: Sincronizza colori - inject CSS variables da TEAM_COLORS in constants.js",
+        "AZIONE 62: Migra menu HTML structure a data-driven - leggi da config object, genera dinamicamente"
+      ]
+    }
+  ],
+  "globalVariables": [
+    {
+      "name": "socket",
+      "location": "game.js:7",
+      "consolidationNeeded": false,
+      "reason": "Connessione Socket.io globale - OK, ma priva di type hints. Suggerimento: aggiungi JSDoc."
+    },
+    {
+      "name": "otherPlayers",
+      "location": "game.js:8",
+      "consolidationNeeded": true,
+      "reason": "Cache player remoti - consolidare in PlayerCacheManager con getter/setter/events"
+    },
+    {
+      "name": "myId, myUsername, myTeam, myTeamColor",
+      "location": "game.js:9-13",
+      "consolidationNeeded": true,
+      "reason": "Dati player locale sparsi - unificare in PlayerState class singleton con sync server"
+    },
+    {
+      "name": "playerStats",
+      "location": "game.js:31",
+      "consolidationNeeded": true,
+      "reason": "Stato giocatore - dovrebbe essere PlayerManager class con propertyChangeEvent"
+    },
+    {
+      "name": "velocity",
+      "location": "game.js:30",
+      "consolidationNeeded": true,
+      "reason": "Vettore velocità - parte di PhysicsManager o PlayerManager"
+    },
+    {
+      "name": "castingState",
+      "location": "game.js:37",
+      "consolidationNeeded": true,
+      "reason": "Stato incantesimi complesso - crea CastingState class con methods getProgress(), isReady()"
+    },
+    {
+      "name": "projectiles, obstacles, particles",
+      "location": "game.js:25-27",
+      "consolidationNeeded": true,
+      "reason": "Array globali update-heavy - crea ObjectManager class con update(delta), add(), remove()"
+    },
+    {
+      "name": "activeConversions",
+      "location": "game.js:38",
+      "consolidationNeeded": true,
+      "reason": "Conversioni attive - parte di SpellManager, implementa auto-cleanup"
+    },
+    {
+      "name": "matchStats",
+      "location": "game.js:42",
+      "consolidationNeeded": true,
+      "reason": "Statistiche match - sincronizzare con server, centralizzare in MatchStats class"
+    },
+    {
+      "name": "playerMesh, swordContainer, staffContainer, bowContainer, shieldMesh",
+      "location": "game.js:16, player.js:115-154",
+      "consolidationNeeded": true,
+      "reason": "Mesh player e armi sparse - unificare in PlayerVisuals class"
+    },
+    {
+      "name": "playerLimbs",
+      "location": "player.js:14",
+      "consolidationNeeded": true,
+      "reason": "Referenze arti - parte di PlayerBuilder interno, non globale"
+    },
+    {
+      "name": "scene, camera, renderer",
+      "location": "game.js:15",
+      "consolidationNeeded": false,
+      "reason": "Core THREE.js - OK globale, ma crea SceneManager per gestire lifecycle"
+    },
+    {
+      "name": "SETTINGS",
+      "location": "game.js:49",
+      "consolidationNeeded": false,
+      "reason": "Costanti gameplay - OK globale, pero move in constants.js"
+    },
+    {
+      "name": "players",
+      "location": "server.js:13",
+      "consolidationNeeded": true,
+      "reason": "Cache server player - crea PlayerRegistry class con sync, cleanup, queries"
+    },
+    {
+      "name": "lastSeen, playerKills, teamKills",
+      "location": "server.js:14-16",
+      "consolidationNeeded": true,
+      "reason": "Tracking server sparso - unificare in GameState class con events"
+    },
+    {
+      "name": "menuSocket",
+      "location": "menu.js:6",
+      "consolidationNeeded": true,
+      "reason": "Socket menu separato - riusa socket globale di game.js, gestisci in network.js"
+    },
+    {
+      "name": "selectedTeam, playerUsername, currentGameMode",
+      "location": "menu.js:3-5",
+      "consolidationNeeded": true,
+      "reason": "Stato menu sparso - parte di PlayerState con events, sync ai window.* per game.js"
+    },
+    {
+      "name": "audioCtx, audioEnabled",
+      "location": "game.js:605-606",
+      "consolidationNeeded": true,
+      "reason": "Audio system duplicato in menu.js - centralizzare in AudioManager singleton"
+    },
+    {
+      "name": "aiMonster, isPvEMode",
+      "location": "game.js:12-13",
+      "consolidationNeeded": true,
+      "reason": "AI sparso - crea GameModeManager che instanzia AI quando isPvEMode=true"
+    }
+  ],
+  "duplicateHandlers": [
+    {
+      "event": "playerAttack",
+      "locations": [
+        "spells.js line 64 - executeAttack() emette playerAttack type 5 (arrow)",
+        "spells.js line 75 - executeAttack() emette playerAttack per spell",
+        "spells.js line 159 - performWhirlwind() emette playerAttack type whirlwind",
+        "spells.js line 262 - fireHitscan() emette playerAttack type spikes"
+      ],
+      "issue": "Quattro diversi emit per stesso evento - pattern non consolidato",
+      "solution": "Crea SpellEmitter.emitAttack(type, origin, direction) centralizzato"
+    },
+    {
+      "event": "playerHit",
+      "locations": [
+        "spells.js line 171 - whirlwind emit playerHit",
+        "spells.js line 257 - fireHitscan emit playerHit"
+      ],
+      "issue": "Due diverse emissioni per hit - incoerente",
+      "solution": "Consolida in SpellEmitter.emitHit(targetId, damage, type)"
+    },
+    {
+      "event": "playerMovement",
+      "locations": [
+        "network.js line 17 - sendPositionUpdate() emette",
+        "player.js line 522 - updatePhysics() emette",
+        "network.js line 119 - forcePositionUpdate handler emette"
+      ],
+      "issue": "Tre fonti emissione movimento - possibile sincronizzazione doppia",
+      "solution": "Emetti SOLO da sendPositionUpdate(), throttla a 50ms"
+    },
+    {
+      "event": "playerBlock",
+      "locations": [
+        "game.js line 976 - isBlocking true emit",
+        "game.js line 982 - isBlocking false emit"
+      ],
+      "issue": "Due emit per blocco on/off - consolidabile in uno",
+      "solution": "Emit unico: socket.emit('playerBlock', isBlocking)"
+    },
+    {
+      "event": "socket.on('playerDied')",
+      "locations": [
+        "network.js line 396 - handler playerDied se myId",
+        "network.js line ~430 - handler playerDied per altri"
+      ],
+      "issue": "Logica morte spezzata in due branch",
+      "solution": "Consolida in unico handler con check if (data.id === myId)"
+    },
+    {
+      "event": "socket.on('playerRespawned')",
+      "locations": [
+        "network.js line 322 - handler principalfe",
+        "server.js line 379 - broadcast newPlayer post-respawn (duplicato)"
+      ],
+      "issue": "Respawn notificato due volte - newPlayer e playerRespawned",
+      "solution": "Usa SOLO playerRespawned, includi dati completi (team, color)"
+    },
+    {
+      "event": "socket.emit('joinGame')",
+      "locations": [
+        "network.js line 55 - initMultiplayer emette joinGame",
+        "server.js line 65 - handler joinGame"
+      ],
+      "issue": "Passaggio dati via window.myX - fragile",
+      "solution": "Crea LoginData object centralizzato in PlayerState"
+    },
+    {
+      "event": "socket.emit('playerHealed')",
+      "locations": [
+        "spells.js line 116 - applyConversionTick emette per ogni tick",
+        "spells.js line 140 - performHeal emette",
+        "network.js line 315 - updateHealth handler (ma non emette indietro)"
+      ],
+      "issue": "Heal comunicato pero server già applica health update automatico",
+      "solution": "Rimuovi playerHealed, usa solo updateHealth dal server"
+    }
+  ],
+  "deadCode": [
+    {
+      "code": "positionBuffer",
+      "location": "game.js line 35",
+      "description": "Buffer interpolazione posizione dichiarato mai usato",
+      "action": "Implementa in updatePhysics() con lerp tra posizioni, oppure rimuovi"
+    },
+    {
+      "code": "INTERPOLATION_DELAY",
+      "location": "game.js line 36",
+      "description": "Costante per interpolazione mai usata",
+      "action": "Implementa con positionBuffer oppure rimuovi"
+    },
+    {
+      "code": "serverTime, clientTimeOffset",
+      "location": "game.js line 34-35",
+      "description": "Per lag compensation mai usati",
+      "action": "Implementa time sync con server oppure rimuovi"
+    },
+    {
+      "code": "lodObjects, LOD_DISTANCES",
+      "location": "game.js line 24, 22",
+      "description": "LOD system dichiarato non implementato in updatePhysics()",
+      "action": "Implementa culling distanza oppure rimuovi"
+    },
+    {
+      "code": "spectateTarget, spectateIndex, isSpectating",
+      "location": "game.js line 38-40",
+      "description": "Spectator mode dichiarato mai implementato",
+      "action": "Completa implementazione oppure rimuovi"
+    },
+    {
+      "code": "createArenaWalls()",
+      "location": "world.js line 230 (commented out at line 86)",
+      "description": "Funzione definita ma commentata - mai usata",
+      "action": "Rimuovi function e commenti"
+    },
+    {
+      "code": "createPillar(), createFantasyHouse(), createTrainingDummy()",
+      "location": "world.js line 279, 312, 336",
+      "description": "Funzioni definite non chiamate da createTeamMap()",
+      "action": "Rimuovi oppure implementa in mappa"
+    },
+    {
+      "code": "createHealingTemple()",
+      "location": "world.js line 159",
+      "description": "Funzione definita non usata",
+      "action": "Rimuovi"
+    },
+    {
+      "code": "isPvEMode flag logic",
+      "location": "game.js line 12 e ai.js",
+      "description": "Flag PvE dichiarato ma non controlla flow - AI non innestato correttamente",
+      "action": "Implementa GameModeManager oppure rimuovi"
+    },
+    {
+      "code": "matchHistory localStorage",
+      "location": "game.js line 43 (localStorage.getItem)",
+      "description": "Match history caricato ma mai usato in UI",
+      "action": "Implementa history display oppure rimuovi"
+    },
+    {
+      "code": "floatingTexts",
+      "location": "game.js line 38",
+      "description": "Array floating text mai limitato - possibile memory leak",
+      "action": "Implementa max size 20 con pool, oppure verifica se usato"
+    },
+    {
+      "code": "checkLogin()",
+      "location": "network.js line 627",
+      "description": "Funzione definita mai chiamata",
+      "action": "Rimuovi oppure chiama in initMultiplayer()"
+    },
+    {
+      "code": "createInstancedObstacles()",
+      "location": "instancing.js line 6",
+      "description": "Sistema instancing definito mai chiamato da setupWorld()",
+      "action": "Integra in world setup oppure rimuovi instancing.js"
+    },
+    {
+      "code": "keyToRebind",
+      "location": "game.js line 35",
+      "description": "Per rebind tasti definito non sincronizzato",
+      "action": "Completa sistema rebind oppure rimuovi"
+    }
+  ],
+  "dependencyMap": {
+    "game.js": {
+      "imports": [
+        "THREE.js (external)"
+      ],
+      "depends_on": [
+        "network.js (socket listeners, addOtherPlayer)",
+        "player.js (createPlayer, updatePhysics, createAnimations)",
+        "spells.js (startCasting, executeAttack, updateProjectiles)",
+        "world.js (setupWorld, createTeamMap)",
+        "ai.js (createAIMonster, updateAIMonster)",
+        "menu.js (returnToMenu reads window.myX)"
+      ],
+      "provides": [
+        "scene, camera, renderer (THREE.js scene)",
+        "myId, myUsername, myTeam (player state)",
+        "playerStats, velocity (physics)",
+        "projectiles, particles (visual objects)"
+      ]
+    },
+    "network.js": {
+      "imports": [
+        "socket.io (external, via index.html script)"
+      ],
+      "depends_on": [
+        "game.js (otherPlayers, playerMesh, playerStats, SETTINGS)",
+        "player.js (updateAnimations, createPlayerLabel)",
+        "spells.js (spawnProjectile, spawnParticles)"
+      ],
+      "provides": [
+        "socket (Socket.io connection)",
+        "initMultiplayer() function"
+      ]
+    },
+    "player.js": {
+      "imports": [],
+      "depends_on": [
+        "game.js (scene, playerMesh, velocity, SETTINGS, playerLimbs)"
+      ],
+      "provides": [
+        "createPlayer(), updatePhysics(delta), updateAnimations(delta)",
+        "playerLimbs object structure"
+      ]
+    },
+    "spells.js": {
+      "imports": [],
+      "depends_on": [
+        "game.js (playerMesh, camera, socket, SETTINGS, castingState, projectiles)",
+        "player.js (getStaffTip() presumibilmente)",
+        "network.js (socket for emit)"
+      ],
+      "provides": [
+        "startCasting(), executeAttack(), spawnProjectile()",
+        "updateProjectiles(delta)"
+      ]
+    },
+    "world.js": {
+      "imports": [
+        "THREE.js (external)"
+      ],
+      "depends_on": [
+        "game.js (scene, obstacles, random seed)"
+      ],
+      "provides": [
+        "setupWorld(), createTeamMap(), obstacle creation"
+      ]
+    },
+    "ai.js": {
+      "imports": [],
+      "depends_on": [
+        "game.js (scene, playerMesh, isPvEMode, projectiles, SETTINGS)",
+        "spells.js (spawnEnemyProjectile implicito - duplicato)"
+      ],
+      "provides": [
+        "createAIMonster(), updateAIMonster(delta), aiMonsterCastSpell()"
+      ]
+    },
+    "menu.js": {
+      "imports": [
+        "socket.io (external)"
+      ],
+      "depends_on": [
+        "game.js (indirect via window.myX, startGame())",
+        "network.js (socket listeners via menuSocket)"
+      ],
+      "provides": [
+        "initMenu(), startGame(mode)",
+        "window.myTeam, window.myUsername, window.myTeamColor (global state)"
+      ]
+    },
+    "instancing.js": {
+      "imports": [
+        "THREE.js (external)"
+      ],
+      "depends_on": [
+        "world.js (setupWorld unused)"
+      ],
+      "provides": [
+        "createInstancedObstacles() - UNUSED"
+      ]
+    },
+    "server.js": {
+      "imports": [
+        "express, http, socket.io (external)"
+      ],
+      "depends_on": [],
+      "provides": [
+        "Game server logic",
+        "players cache, killTracking",
+        "Socket event handlers"
+      ]
+    },
+    "CIRCULAR_DEPENDENCY_RISK": {
+      "issue": "game.js -> network.js -> game.js (otherPlayers, playerMesh)",
+      "severity": "MEDIUM - works but fragile",
+      "solution": "Introduce EventBus pattern - game.js emit events, network.js listen"
+    }
+  },
+  "architectureRecommendations": {
+    "patternSuggestions": [
+      {
+        "pattern": "Singleton Pattern",
+        "where": ["AudioManager", "PlayerState", "GameState", "DOMManager"],
+        "benefit": "Centralizza accesso globale, facilita testing, previene duplicazione"
+      },
+      {
+        "pattern": "Observer Pattern",
+        "where": ["PlayerState.onHealthChanged", "GameState.onPlayerDied", "AudioManager.onVolumeChanged"],
+        "benefit": "Decoupling, event-driven, più facile fare UI updates"
+      },
+      {
+        "pattern": "Manager Pattern",
+        "where": ["InputManager", "PhysicsManager", "SpellManager", "ObjectPoolManager"],
+        "benefit": "Centralizza logica correlata, facilita manutenzione"
+      },
+      {
+        "pattern": "State Pattern",
+        "where": ["AnimationStateMachine", "CastingState", "PlayerState (dead/alive/casting)"],
+        "benefit": "Logica stato esplicita, previene invalid state transitions"
+      },
+      {
+        "pattern": "Builder Pattern",
+        "where": ["PlayerBuilder (mesh construction)", "WorldBuilder (map generation)"],
+        "benefit": "Separazione creazione da logica, più testabile"
+      },
+      {
+        "pattern": "Object Pool",
+        "where": ["ProjectilePool", "ParticlePool", "SoundPool"],
+        "benefit": "Performance critical - elimina GC pressure"
+      },
+      {
+        "pattern": "Strategy Pattern",
+        "where": ["Spell implementations (Missile, Fireball, Push)", "AI behaviors (patrol, chase, attack)"],
+        "benefit": "Polymorphism, facile aggiungere nuovi spell/AI"
+      },
+      {
+        "pattern": "EventBus / Pub-Sub",
+        "where": ["Game events (playerDied, playerHit, spellCast)", "UI updates"],
+        "benefit": "Decoupling totale, event-driven architecture"
+      }
+    ],
+    "fileStructureTargetLayout": {
+      "description": "Struttura proposta post-refactoring",
+      "structure": {
+        "public/js/core": [
+          "constants.js - TEAM_COLORS, SETTINGS, WORLD_CONFIG",
+          "globals.js - scene, camera, renderer, socket (export singleton references)"
+        ],
+        "public/js/managers": [
+          "PlayerStateManager.js - myId, myTeam, myTeamColor (singleton)",
+          "PlayerCacheManager.js - otherPlayers cache con getter/setter",
+          "InputManager.js - keyboard/mouse listeners",
+          "AudioManager.js - audioCtx, playSound, background music",
+          "DOMManager.js - cached element references, update methods",
+          "CameraController.js - camera follow, FOV, offset",
+          "PhysicsManager.js - gravity, collision, velocity integration"
+        ],
+        "public/js/systems": [
+          "AnimationSystem.js - state machine per animazioni",
+          "SpellSystem.js - spell registry, casting, projectiles",
+          "ParticleSystem.js - particle pool, updates",
+          "GameModeManager.js - team vs PvE vs other modes"
+        ],
+        "public/js/entities": [
+          "Player.js - player class con state",
+          "PlayerBuilder.js - mesh construction",
+          "AIMonster.js - class eredita da Player",
+          "Projectile.js - base class projectiles",
+          "Spell.js - base class spells"
+        ],
+        "public/js/world": [
+          "WorldManager.js - scene setup, LOD, map generation",
+          "TerrainGenerator.js - texture, obstacles, decorations",
+          "CollisionManager.js - raycasting, physics checks"
+        ],
+        "public/js/network": [
+          "SocketManager.js - centralizzato socket.on/emit",
+          "SyncManager.js - client-server sync, lag compensation",
+          "HitValidator.js - server-side hit validation logic"
+        ],
+        "public/js/ui": [
+          "MenuController.js - menu screen logic",
+          "GameUIController.js - HUD, stats, chat, keybinds",
+          "UIBuilder.js - dinamicamente genera UI da config"
+        ],
+        "server/": [
+          "server.js - express + socket.io setup",
+          "GameState.js - players registry, kill tracking",
+          "PlayerRegistry.js - player creation/removal/queries",
+          "GameLogic.js - hit validation, damage, respawn",
+          "TeamManager.js - team counts, balance, zone assignment"
+        ]
+      }
+    },
+    "priorityOrder": [
+      {
+        "phase": 1,
+        "name": "Consolidamento Variabili Globali",
+        "tasks": [
+          "Crea constants.js",
+          "Crea PlayerState singleton",
+          "Crea GameState singleton",
+          "Aggiorna game.js, menu.js, network.js per usare singleton"
+        ],
+        "estimatedHours": 4,
+        "risk": "MEDIUM - deve preservare funzionalità esistente"
+      },
+      {
+        "phase": 2,
+        "name": "Centralizzamento Socket & Network",
+        "tasks": [
+          "Crea SocketManager.js",
+          "Consolida tutti socket.on() in un posto",
+          "Consolida tutti socket.emit() in utility functions",
+          "Rimuovi menuSocket, usa socket unico"
+        ],
+        "estimatedHours": 6,
+        "risk": "HIGH - touch network critical code"
+      },
+      {
+        "phase": 3,
+        "name": "Separazione Concerns Game Loop",
+        "tasks": [
+          "Estrai InputManager",
+          "Estrai PhysicsManager",
+          "Estrai AnimationSystem",
+          "Refactor animate() in updateLogic/updatePhysics/render"
+        ],
+        "estimatedHours": 8,
+        "risk": "HIGH - core game loop"
+      },
+      {
+        "phase": 4,
+        "name": "Audio System Unification",
+        "tasks": [
+          "Crea AudioManager singleton",
+          "Consolida audioCtx, audioEnabled",
+          "Unified playSound(), background music",
+          "Remove menu-music audio element, sintetizza tutto"
+        ],
+        "estimatedHours": 3,
+        "risk": "MEDIUM"
+      },
+      {
+        "phase": 5,
+        "name": "Spell & Combat Refactoring",
+        "tasks": [
+          "Crea Spell base class",
+          "Crea CooldownManager",
+          "Crea SpellEmitter per emit unificati",
+          "Refactor startCasting -> Spell.cast()"
+        ],
+        "estimatedHours": 6,
+        "risk": "HIGH - gameplay critical"
+      },
+      {
+        "phase": 6,
+        "name": "UI Refactoring",
+        "tasks": [
+          "Crea DOMManager con cache",
+          "Crea MenuController",
+          "Crea GameUIController",
+          "Migra HTML structure a data-driven"
+        ],
+        "estimatedHours": 5,
+        "risk": "MEDIUM"
+      },
+      {
+        "phase": 7,
+        "name": "World & Asset Management",
+        "tasks": [
+          "Crea WorldBuilder",
+          "Integra instancing.js",
+          "Implementa LOD system",
+          "Cache texture generation"
+        ],
+        "estimatedHours": 5,
+        "risk": "LOW"
+      },
+      {
+        "phase": 8,
+        "name": "AI Integration",
+        "tasks": [
+          "Crea AIMonster class eredita Player",
+          "Crea GameModeManager",
+          "Consolida AI projectile spawn",
+          "Sincronizza AI death ai network"
+        ],
+        "estimatedHours": 4,
+        "risk": "MEDIUM"
+      },
+      {
+        "phase": 9,
+        "name": "Pulizia Dead Code & Testing",
+        "tasks": [
+          "Rimuovi positionBuffer, spectateMode, unused functions",
+          "Aggiungi JSDoc comments",
+          "Implementa basic unit tests per managers",
+          "Load testing & profiling"
+        ],
+        "estimatedHours": 6,
+        "risk": "LOW"
+      }
+    ]
+  },
+  "estimatedEffort": {
+    "totalHours": 47,
+    "breakdown": {
+      "architecture": "10h",
+      "implementation": "25h",
+      "testing": "8h",
+      "documentation": "4h"
+    },
+    "riskFactors": [
+      "Network code is critical - break multiplayer if wrong",
+      "Game loop refactor high-risk - must preserve frame rate",
+      "Audio context singleton might conflict with browser policies",
+      "Circular dependencies need careful untangling"
+    ]
+  }
+}

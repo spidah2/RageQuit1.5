@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RageQuit: Rosik Arena</title>
+        <link rel="stylesheet" href="./css/styles.css">
+
+</head>
+<body>
+    <audio id="menu-music" loop>
+        <source src="./sound/music-menu.ogg" type="audio/ogg">
+    </audio>
+    <div id="screen-flash"></div>
+    <div id="floating-text-container"></div>
+    <div id="connection-status">DISCONNESSO</div>
+    <div id="fps-counter" style="position:fixed;top:50px;right:10px;color:#00ff00;font-size:14px;font-family:monospace;z-index:1000;text-align:right;">FPS: 0</div>
+    <div id="ping-counter" style="position:fixed;top:70px;right:10px;color:#ffff00;font-size:14px;font-family:monospace;z-index:1000;text-align:right;">PING: 0ms</div>
+    
+    <!-- TEAM SCOREBOARD -->
+    <div id="team-scoreboard">
+        <div class="team-score" data-team="red">
+            <div class="team-header">
+                <span class="team-icon">🔴</span>
+                <span class="team-name">CARNAGE</span>
+                <span class="team-score-value">0</span>
+            </div>
+            <div class="team-players" data-team="red"></div>
+        </div>
+        <div class="team-score" data-team="black">
+            <div class="team-header">
+                <span class="team-icon">🔵</span>
+                <span class="team-name">GRAVES</span>
+                <span class="team-score-value">0</span>
+            </div>
+            <div class="team-players" data-team="black"></div>
+        </div>
+        <div class="team-score" data-team="green">
+            <div class="team-header">
+                <span class="team-icon">🟢</span>
+                <span class="team-name">SLAUGHTER</span>
+                <span class="team-score-value">0</span>
+            </div>
+            <div class="team-players" data-team="green"></div>
+        </div>
+        <div class="team-score" data-team="purple">
+            <div class="team-header">
+                <span class="team-icon">🟣</span>
+                <span class="team-name">VISCERA</span>
+                <span class="team-score-value">0</span>
+            </div>
+            <div class="team-players" data-team="purple"></div>
+        </div>
+    </div>
+
+    <div class="top-controls-left">
+        <button id="menu-btn" class="btn" style="border-bottom: 2px solid #e91e63;">MENU</button>
+        <button id="keybinds-btn" class="btn">KEYBINDS</button>
+        <button id="audio-btn" class="btn">🔊 SUONI: ON</button>
+        <button id="fullscreen-btn" class="btn">🖥️ FULLSCREEN</button>
+    </div>
+
+    <div class="top-controls-center">
+        <button id="reset-btn" class="btn">RESPAWN</button>
+        <button id="team-select-btn" class="btn">SELECT TEAM</button>
+    </div>
+
+    <div id="crosshair"></div>
+    <div id="cast-bar-container"><div id="cast-text">CHARGING...</div><div id="cast-bar-fill"></div></div>
+    
+    <!-- ACTION BAR MOVED TO TOP CENTER -->
+    <div id="action-bar">
+        <div id="slot-q" class="action-slot slot-q"><div class="key-label" id="lbl-switch">Q</div><div class="spell-icon">⚔️</div><div class="cooldown-overlay" id="whirlwind-cd"></div></div>
+        <div id="slot-e" class="action-slot slot-e"><div class="key-label" id="lbl-bow">E</div><div class="spell-icon">🏹</div><div class="cooldown-overlay"></div></div>
+        <div id="slot-1" class="action-slot slot-1 active"><div class="key-label" id="lbl-spell1">1</div><div class="spell-icon">🔹</div><div class="cooldown-overlay"></div></div>
+        <div id="slot-2" class="action-slot slot-2"><div class="key-label" id="lbl-spell2">2</div><div class="spell-icon">💨</div><div class="cooldown-overlay"></div></div>
+        <div id="slot-3" class="action-slot slot-3"><div class="key-label" id="lbl-spell3">3</div><div class="spell-icon">🔥</div><div class="cooldown-overlay"></div></div>
+        <div id="slot-4" class="action-slot slot-4"><div class="key-label" id="lbl-spell4">4</div><div class="spell-icon">⛰️</div><div class="cooldown-overlay" id="spikes-cd"></div></div>
+        <div id="slot-r" class="action-slot slot-r"><div class="key-label" id="lbl-heal">R</div><div class="spell-icon">💚</div><div class="cooldown-overlay" id="heal-cd"></div></div>
+        <div class="separator"></div>
+        <div id="slot-5" class="action-slot" onclick="window.performConversion(1)"><div class="key-label" id="lbl-conv1">5</div><div class="spell-icon"><span class="conv-icon plus-red">+♥</span><span class="conv-icon minus-yellow">-⚡</span></div><div class="cooldown-overlay" id="conv1-cd"></div></div>
+        <div id="slot-6" class="action-slot" onclick="window.performConversion(2)"><div class="key-label" id="lbl-conv2">6</div><div class="spell-icon"><span class="conv-icon plus-blue">+💧</span><span class="conv-icon minus-red">-♥</span></div><div class="cooldown-overlay" id="conv2-cd"></div></div>
+        <div id="slot-7" class="action-slot" onclick="window.performConversion(3)"><div class="key-label" id="lbl-conv3">7</div><div class="spell-icon"><span class="conv-icon plus-yellow">+⚡</span><span class="conv-icon minus-blue">-💧</span></div><div class="cooldown-overlay" id="conv3-cd"></div></div>
+    </div>
+
+    <div id="ui-container">
+        <div class="bar-container"><div id="hp-bar" class="bar"></div><span class="label">HEALTH</span><span class="stat-value" id="hp-value">100/100</span></div>
+        <div class="bar-container"><div id="mana-bar" class="bar"></div><span class="label">MANA</span><span class="stat-value" id="mana-value">100/100</span></div>
+        <div class="bar-container"><div id="stamina-bar" class="bar"></div><span class="label" style="color:#ffffaa">STAMINA</span><span class="stat-value" id="stamina-value">100/100</span></div>
+        <div style="margin-top:5px; font-size:12px; color:#aaa; text-align:center;">
+            <span id="weapon-mode-text" style="color:cyan">RANGED</span>
+            <span id="block-text" style="color:#ffd700; display:none; margin-left:10px;">🛡️ PARRY</span>
+        </div>
+    </div>
+    
+    <!-- CHAT MOVIBILE -->
+    <div id="chat-container">
+        <div id="chat-header">💬 CHAT <button id="chat-close-btn" style="float:right;background:transparent;border:none;color:#ff0000;font-weight:900;cursor:pointer;font-size:16px;">×</button></div>
+        <div id="chat-messages"></div>
+        <div id="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Press ENTER to chat..." maxlength="100">
+        </div>
+    </div>
+
+    <!-- FREE LOOK BUTTON -->
+    <div id="freelook-button" style="
+        position: fixed;
+        bottom: 230px;
+        left: 20px;
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 3px solid #0f3460;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        color: #00d4ff;
+        text-align: center;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        transition: all 0.2s ease;
+        user-select: none;
+        padding: 8px;
+        line-height: 1.2;
+    ">
+        <span>FREE<br>LOOK<br>(CTRL)</span>
+    </div>
+
+    <div id="message"></div>
+    <div id="log"></div>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu">
+        <div class="menu-content">
+            <img id="game-logo" src="./IMG/logo.png" alt="RageQuit" class="logo">
+            
+            <div class="menu-buttons-container">
+                <div class="extra-btn-wrapper">
+                    <img src="./IMG/tasto.png" alt="" class="btn-metal-bg">
+                    <button id="team-btn" class="extra-btn">GIOCA</button>
+                </div>
+                <div class="extra-btn-wrapper">
+                    <img src="./IMG/tasto.png" alt="" class="btn-metal-bg">
+                    <button id="menu-keybinds-btn" class="extra-btn">KEYBINDS</button>
+                </div>
+                <div class="extra-btn-wrapper">
+                    <img src="./IMG/tasto.png" alt="" class="btn-metal-bg">
+                    <button id="menu-audio-btn" class="extra-btn">🔊 MUSIC: ON</button>
+                </div>
+                <div class="extra-btn-wrapper">
+                    <img src="./IMG/tasto.png" alt="" class="btn-metal-bg">
+                    <button id="menu-exit-btn" class="extra-btn">EXIT</button>
+                </div>
+            </div>
+            
+            <div class="username-input">
+                <img src="./IMG/osso.png" alt="" class="name-bone-bg">
+                <input type="text" id="username-input" placeholder="WARRIOR NAME" maxlength="12">
+            </div>
+        </div>
+    </div>
+
+    <!-- TEAM SELECTION -->
+    <div id="team-selection-screen" style="display:none;">
+        <div class="team-grid">
+            <div class="team-option" data-team="red">
+                <img src="./IMG/logo_carnage.png" alt="Carnage" class="team-image">
+                <img src="./IMG/nome_carnage.png" alt="Carnage" class="team-name-image">
+                <div class="team-player-count" id="team-count-red">0 giocatori</div>
+            </div>
+            <div class="team-option" data-team="black">
+                <img src="./IMG/logo_graves.png" alt="Graves" class="team-image">
+                <img src="./IMG/nome_graves.png" alt="Graves" class="team-name-image">
+                <div class="team-player-count" id="team-count-black">0 giocatori</div>
+            </div>
+            <div class="team-option" data-team="green">
+                <img src="./IMG/logo_slaughter.png" alt="Slaughter" class="team-image">
+                <img src="./IMG/nome_slaughter.png" alt="Slaughter" class="team-name-image">
+                <div class="team-player-count" id="team-count-green">0 giocatori</div>
+            </div>
+            <div class="team-option" data-team="purple">
+                <img src="./IMG/logo_viscera.png" alt="Viscera" class="team-image">
+                <img src="./IMG/nome_viscera.png" alt="Viscera" class="team-name-image">
+                <div class="team-player-count" id="team-count-purple">0 giocatori</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="keybinds-panel">
+        <h2>⌨️ CONFIGURAZIONE TASTI</h2>
+        <div id="keybinds-content"></div>
+        <button id="close-keybinds">CLOSE</button>
+    </div>
+
+    <!-- Carica THREE.js e Socket.IO in modo sincrono -->
+    <script src="https://unpkg.com/three@0.170.0/build/three.min.js"></script>
+    <script>
+        // Check THREE.js loading
+        if (typeof THREE === 'undefined') {
+            console.error('[THREE] r170 failed, loading r128 fallback');
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+        } else {
+            console.log('[THREE] Version r' + THREE.REVISION + ' loaded successfully');
+        }
+    </script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Carica config e utils PRIMA di tutti gli altri moduli -->
+    <script src="./js/config.js"></script>
+    <script src="./js/utils.js"></script>
+    
+    <!-- Manager classes (game state and input handling) -->
+    <script src="./js/playerStateManager.js"></script>
+    <script src="./js/inputManager.js"></script>
+    <script src="./js/audioManager.js"></script>
+    <script src="./js/animationManager.js"></script>
+    <script src="./js/playerStatsManager.js"></script>
+    <script src="./js/abilityManager.js"></script>
+    <script src="./js/settingsManager.js"></script>
+    <script src="./js/playerEventSystem.js"></script>
+    
+    <!-- Factory classes (mesh creation) -->
+    <script src="./js/playerMeshFactory.js"></script>
+    
+    <!-- Carica moduli del gioco PRIMA di network -->
+    <script src="./js/menu.js"></script>
+    <script src="./js/instancing.js"></script>
+    <script src="./js/spells.js"></script>
+    <script src="./js/world.js"></script>
+    <script src="./js/player.js"></script>
+    <script src="./js/ai.js"></script>
+    <script src="./js/game.js"></script>
+    
+    <!-- Network DOPO game.js per avere accesso alle variabili globali -->
+    <script src="./js/socketHandlers.js"></script>
+    <script src="./js/network.js"></script>
+
+</body>
+</html>

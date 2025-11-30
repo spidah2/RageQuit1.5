@@ -37,6 +37,15 @@ function createPlayer() {
     // 3. Collegamento: playerMesh = modello visivo, playerStats = dati logica
 
     // Richiedi il modello grafico all'AssetManager
+    // Se non esiste, crealo adesso (lazy initialization)
+    if (typeof window.assetManager === 'undefined' || !window.assetManager) {
+        if (typeof window.createAssetManager === 'function' && typeof scene !== 'undefined') {
+            window.createAssetManager(scene);
+            logGame('[CREATE PLAYER] AssetManager created lazily', 'GAME');
+        }
+    }
+    
+    // Prova ancora ad usare AssetManager
     if (typeof window.assetManager !== 'undefined' && window.assetManager) {
         playerMesh = window.assetManager.getPlayerMesh(teamColor);
         logGame('[CREATE PLAYER] Using AssetManager', 'GAME');

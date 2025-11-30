@@ -1,6 +1,14 @@
 // world.js - Sistema mappa (uses AssetManager for asset loading)
 
 function setupWorld() {
+    // Se non esiste, crealo adesso (lazy initialization)
+    if (typeof window.assetManager === 'undefined' || !window.assetManager) {
+        if (typeof window.createAssetManager === 'function' && typeof scene !== 'undefined') {
+            window.createAssetManager(scene);
+            logGame('[WORLD] AssetManager created lazily', 'WORLD');
+        }
+    }
+    
     // Usa AssetManager per caricare la mappa
     if (typeof window.assetManager !== 'undefined' && window.assetManager && typeof window.assetManager.loadMap === 'function') {
         window.assetManager.loadMap('team-arena');

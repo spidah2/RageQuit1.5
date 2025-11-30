@@ -195,18 +195,58 @@
         <button id="close-keybinds">CLOSE</button>
     </div>
 
-    <!-- Carica THREE.js e Socket.IO in modo sincrono -->
-    <script src="https://unpkg.com/three@0.170.0/build/three.min.js"></script>
+    <!-- Carica THREE.js con fallback robusto -->
     <script>
-        // Check THREE.js loading
-        if (typeof THREE === 'undefined') {
-            console.error('[THREE] r170 failed, loading r128 fallback');
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
-        } else {
-            console.log('[THREE] Version r' + THREE.REVISION + ' loaded successfully');
-        }
+        // Carica THREE.js r170 con fallback a r128
+        window.THREE_LOADED = new Promise((resolve, reject) => {
+            (function() {
+                function loadThreeJS(src, version) {
+                    return new Promise((resolveLoad, rejectLoad) => {
+                        const script = document.createElement('script');
+                        script.src = src;
+                        script.async = true;
+                        script.onload = () => {
+                            if (typeof THREE !== 'undefined') {
+                                console.log('[THREE.JS] Version r' + THREE.REVISION + ' (' + version + ') loaded successfully');
+                                resolveLoad();
+                            } else {
+                                rejectLoad(new Error(version + ' failed to load'));
+                            }
+                        };
+                        script.onerror = () => {
+                            rejectLoad(new Error('Failed to load ' + version));
+                        };
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                // Try r170 first, fallback to r128
+                loadThreeJS('https://unpkg.com/three@0.170.0/build/three.min.js', 'r170')
+                    .catch(() => {
+                        console.warn('[THREE.JS] r170 failed, attempting r128 fallback');
+                        return loadThreeJS('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'r128');
+                    })
+                    .then(() => resolve())
+                    .catch((err) => {
+                        console.error('[THREE.JS] Critical error - all versions failed to load:', err);
+                        document.body.innerHTML = '<h1 style="color:red;text-align:center;margin-top:100px;">Failed to load THREE.js library. Check your internet connection.</h1>';
+                        reject(err);
+                    });
+            })();
+        });
     </script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Wrapper per assicurarsi che game.js aspetti THREE.js -->
+    <script>
+        window.GAME_READY = window.THREE_LOADED.then(() => {
+            // THREE.js è caricato, ora carica il gioco
+            console.log('[BOOTSTRAP] THREE.js ready, loading game modules...');
+        }).catch((err) => {
+            console.error('[BOOTSTRAP] Failed to initialize THREE.js:', err);
+            throw err;
+        });
+    </script>
 
     <!-- Carica config e utils PRIMA di tutti gli altri moduli -->
     <script src="./js/config.js"></script>

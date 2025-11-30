@@ -1,8 +1,24 @@
 // Verifica che THREE.js sia caricato
 if (typeof THREE === 'undefined') {
-    throw new Error('[GAME] THREE.js not loaded! Check script loading order.');
+    console.warn('[GAME] THREE.js not yet loaded, waiting...');
+    // Aspetta che THREE.js sia caricato
+    if (typeof window.THREE_LOADED !== 'undefined') {
+        window.THREE_LOADED.then(() => {
+            console.log('[GAME] THREE.js ready, version r' + THREE.REVISION);
+            initGame();
+        }).catch((err) => {
+            console.error('[GAME] Failed to load THREE.js:', err);
+            document.body.innerHTML = '<h1 style="color:red;">Failed to load game - THREE.js unavailable</h1>';
+        });
+    } else {
+        throw new Error('[GAME] THREE.js not loaded! Check script loading order.');
+    }
+} else {
+    console.log('[GAME] THREE.js ready, version r' + THREE.REVISION);
+    initGame();
 }
-console.log('[GAME] THREE.js ready, version r' + THREE.REVISION);
+
+function initGame() {
 
 let socket = null;
         const otherPlayers = {}; 
@@ -1560,3 +1576,4 @@ let socket = null;
         
         // Non inizializzare subito - aspetta che menu.js chiami startGame()
         // init();
+} // Fine della funzione initGame()

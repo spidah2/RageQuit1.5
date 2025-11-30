@@ -168,9 +168,11 @@ io.on('connection', (socket) => {
         socket.emit('currentPlayers', players);
         
         // NUOVO: Invia i dati di kill e team al client al momento del join
+        // Usa GameStateManager per ottenere match stats
+        const matchStats = gameStateManager.getMatchStats();
         socket.emit('matchStats', {
-            playerKills: playerKills,
-            teamKills: teamKills
+            playerKills: matchStats.playerKills,
+            teamKills: matchStats.teamKills
         });
         
         console.log(`TRACE: broadcasting newPlayer from ${socket.id} -> id=${players[socket.id].id}`);
@@ -212,9 +214,10 @@ io.on('connection', (socket) => {
     
     // NUOVO: Handler per richiedere i dati di match stats
     socket.on('requestMatchStats', () => {
+        const matchStats = gameStateManager.getMatchStats();
         socket.emit('matchStats', {
-            playerKills: playerKills,
-            teamKills: teamKills
+            playerKills: matchStats.playerKills,
+            teamKills: matchStats.teamKills
         });
     });
     

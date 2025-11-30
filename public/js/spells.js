@@ -306,6 +306,7 @@ function fireHitscan() {
             
             if (type === 5) {
                 playerStats.stamina -= GAME_CONFIG.SPELL_PARAMS.ARROW_COST;
+                console.log('[ARROW] spawnProjectile called - Stamina after deduct:', playerStats.stamina);
             }
             
             let geo, speed, color, radius;
@@ -313,10 +314,11 @@ function fireHitscan() {
             else if (type === 2) { geo = new THREE.SphereGeometry(1.8); color = 0xffffff; speed = GAME_CONFIG.PHYSICS.PUSH_SPEED; radius = 1.8; } 
             else if (type === 3) { geo = new THREE.SphereGeometry(3.0); color = 0xff6600; speed = GAME_CONFIG.PHYSICS.FIREBALL_SPEED; radius = 3.0; }
             else if (type === 5) { 
-                geo = new THREE.CylinderGeometry(0.1, 0.1, 4); 
-                // RUOTA LA GEOMETRIA PER ALLINEARLA ALL'ASSE Z (Orizzontale)
+                // Freccia: cilindro allungato e ben visibile
+                geo = new THREE.CylinderGeometry(0.2, 0.2, 3.5); 
                 geo.rotateX(-Math.PI / 2); 
-                color = 0x8B4513; speed = GAME_CONFIG.PHYSICS.ARROW_SPEED; radius = 0.5; 
+                color = 0xD2691E; speed = GAME_CONFIG.PHYSICS.ARROW_SPEED; radius = 0.6; 
+                console.log('[ARROW] Arrow geometry created - Speed:', speed, 'Gravity:', GAME_CONFIG.PHYSICS.ARROW_GRAVITY);
             } 
             
             const proj = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color }));
@@ -325,9 +327,10 @@ function fireHitscan() {
             const camDir = new THREE.Vector3(); 
             camera.getWorldDirection(camDir);
             
-            if(type === 5 && weaponMode === 'bow') {
-                 // Freccia parte dalla camera
-                 spawnPos = camera.position.clone().add(camDir.clone().multiplyScalar(3));
+            if(type === 5) {
+                 // Freccia parte dalla camera, leggermente in avanti
+                 spawnPos = camera.position.clone().add(camDir.clone().multiplyScalar(2));
+                 spawnPos.y += 0.5; // Alza un po' dalla camera
             } else {
                  // Spell parte dalla punta dello staff
                  spawnPos = getStaffTip();
@@ -372,11 +375,16 @@ function fireHitscan() {
             
             proj.position.copy(spawnPos);
             
-            if(type === 5) proj.lookAt(targetPoint);
-            else { const light = new THREE.PointLight(color, 1, 30); proj.add(light); }
+            if(type === 5) {
+                proj.lookAt(proj.position.clone().add(velocityDir));
+            } else { 
+                const light = new THREE.PointLight(color, 1, 30); proj.add(light); 
+            }
 
             proj.userData = { velocity: velocityDir.multiplyScalar(speed), life: (type===5 ? 5.0 : 2.0), type: type, isMine: true, radius: radius };
-            scene.add(proj); projectiles.push(proj);
+            scene.add(proj); 
+            projectiles.push(proj);
+            if (type === 5) console.log('[ARROW] Arrow spawned - Position:', spawnPos, 'Velocity:', proj.userData.velocity);
         }
 
         function spawnEnemyProjectile(startPos, direction, type) {
@@ -386,9 +394,9 @@ function fireHitscan() {
             else if (type === 2) { geo = new THREE.SphereGeometry(1.8); color = 0xffffff; speed = GAME_CONFIG.PHYSICS.PUSH_SPEED; radius = 1.8; } 
             else if (type === 3) { geo = new THREE.SphereGeometry(3.0); color = 0xff6600; speed = GAME_CONFIG.PHYSICS.FIREBALL_SPEED; radius = 3.0; }
             else if (type === 5) { 
-                geo = new THREE.CylinderGeometry(0.1, 0.1, 4); 
+                geo = new THREE.CylinderGeometry(0.2, 0.2, 3.5); 
                 geo.rotateX(-Math.PI / 2); 
-                color = 0x8B4513; speed = GAME_CONFIG.PHYSICS.ARROW_SPEED; radius = 0.5;
+                color = 0xD2691E; speed = GAME_CONFIG.PHYSICS.ARROW_SPEED; radius = 0.6;
             }
             
             const proj = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color }));

@@ -300,6 +300,20 @@ function registerAllSocketHandlers(socket) {
                 if (data.targetId === myId) spawnStoneSpikes(playerMesh, true);
                 else if (otherPlayers[data.targetId]) spawnStoneSpikes(otherPlayers[data.targetId].mesh, true);
                 else spawnStoneSpikes(data.origin, false);
+            } else if ([1, 2, 3, 4, 5].includes(data.type)) {
+                // Spell projectile: Missile(1), Begone(2), Fireball(3), Impale(4), Arrow(5)
+                // For impale, just show effect - it's hitscan
+                if (data.type === 4) {
+                    spawnStoneSpikes(data.origin, false);
+                } else if (data.origin && data.direction) {
+                    // Spawn visible projectile
+                    spawnEnemyProjectile(
+                        new THREE.Vector3(data.origin.x, data.origin.y, data.origin.z),
+                        new THREE.Vector3(data.direction.x, data.direction.y, data.direction.z),
+                        data.type
+                    );
+                    playSound(data.type === 3 ? 'shoot_fire' : 'shoot_bolt', data.origin);
+                }
             }
         }
     });

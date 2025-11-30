@@ -319,6 +319,11 @@ function fireHitscan() {
                  // Spell parte dalla punta dello staff
                  spawnPos = getStaffTip();
                  
+                 // Fireball: spawn più alto per evitare clipping con il player
+                 if (type === 3) {
+                    spawnPos.y += 1.5;
+                 }
+                 
                  // Se il player è troppo vicino a un nemico, sposta la spawn più avanti
                  let minEnemyDist = Infinity;
                  Object.values(otherPlayers).forEach(op => {
@@ -340,9 +345,9 @@ function fireHitscan() {
             // Calcola la direzione dal punto di spawn al target
             let velocityDir = new THREE.Vector3().subVectors(targetPoint, spawnPos).normalize();
             
-            // FIREBALL: add upward component for pronounced arc (parabola)
+            // FIREBALL: add gentle upward component, let gravity pull down fast
             if (type === 3) {
-                velocityDir.y += 0.25; // More lift for better arc
+                velocityDir.y += 0.15; // Gentle lift, steep descent from gravity
                 velocityDir.normalize();
             }
             
@@ -371,9 +376,9 @@ function fireHitscan() {
             proj.position.copy(startPos);
             let dirVec = new THREE.Vector3(direction.x, direction.y, direction.z).normalize();
             
-            // FIREBALL: add upward component for pronounced arc (parabola)
+            // FIREBALL: add gentle upward component, let gravity pull down fast
             if (type === 3) {
-                dirVec.y += 0.25; // More lift for better arc
+                dirVec.y += 0.15; // Gentle lift, steep descent from gravity
                 dirVec.normalize();
             }
             

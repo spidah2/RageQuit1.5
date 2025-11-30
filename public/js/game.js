@@ -1069,26 +1069,20 @@ let socket = null;
         function getSpawnPosition() {
             const team = window.myTeam;
             
-            if (team) {
-                // Spawn nelle zone colorate per le squadre
-                const teamSpawns = {
-                    red: { x: -300, z: -300 },
-                    black: { x: 300, z: -300 },
-                    green: { x: -300, z: 300 },
-                    purple: { x: 300, z: 300 }
-                };
+            if (team && WORLD_CONFIG.SPAWN_ZONES[team]) {
+                // Spawn nelle zone colorate per le squadre (da WORLD_CONFIG)
+                const spawnZone = WORLD_CONFIG.SPAWN_ZONES[team];
+                const spawn = spawnZone.center;
                 
-                const spawn = teamSpawns[team];
-                if (spawn) {
-                    // Aggiungi variazione casuale entro 30 unità dal centro
-                    const offsetX = (Math.random() - 0.5) * 60;
-                    const offsetZ = (Math.random() - 0.5) * 60;
-                    return new THREE.Vector3(spawn.x + offsetX, 6, spawn.z + offsetZ);
-                }
+                // Aggiungi variazione casuale entro il variance della zona
+                const offsetX = (Math.random() - 0.5) * spawnZone.variance;
+                const offsetZ = (Math.random() - 0.5) * spawnZone.variance;
+                return new THREE.Vector3(spawn.x + offsetX, spawn.y, spawn.z + offsetZ);
             }
             
-            // Fallback: spawn al centro se squadra non definita
-            return new THREE.Vector3(0, 6, 0);
+            // Fallback: spawn al centro se squadra non definita (da WORLD_CONFIG)
+            const defaultSpawn = WORLD_CONFIG.DEFAULT_SPAWN;
+            return new THREE.Vector3(defaultSpawn.x, defaultSpawn.y, defaultSpawn.z);
         }
         
         function setupUIEvents() {

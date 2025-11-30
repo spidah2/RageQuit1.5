@@ -481,10 +481,11 @@ function updatePhysics(delta) {
             }
             playerStats.stamina = Math.max(0, Math.min(playerStats.maxStamina, playerStats.stamina));
             
-            // Check healing temple proximity
+            // Check healing temple proximity (da WORLD_CONFIG)
             if (window.healingTotemPos) {
+                const totemConfig = WORLD_CONFIG.HEALING_TOTEM;
                 const dist = playerMesh.position.distanceTo(window.healingTotemPos);
-                if (dist < 40) {
+                if (dist < totemConfig.radius) {
                     playerStats.hp = playerStats.maxHp;
                     playerStats.mana = playerStats.maxMana;
                     playerStats.stamina = playerStats.maxStamina;

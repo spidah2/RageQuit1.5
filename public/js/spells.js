@@ -477,6 +477,7 @@ function updateProjectiles(delta) {
                             if (socket) {
                                 if (p.userData.type === 2) { 
                                     spawnExplosionVisual(hitPoint, 0xffffff, GAME_CONFIG.SPELL_PARAMS.PUSH_VISUAL_RADIUS);
+                                    socket.emit('playerPushed', { targetId: targetId, forceY: GAME_CONFIG.SPELL_PARAMS.PUSH_UP_FORCE, forceVec: new THREE.Vector3().subVectors(otherPlayers[targetId].mesh.position, hitPoint).normalize().multiplyScalar(GAME_CONFIG.PHYSICS.PUSH_FORCE), damage: Math.max(0, mitigatedDmg) });
                                     checkShockwaveAoE(hitPoint);
                                 } else if (p.userData.type === 3) { 
                                     spawnExplosionVisual(hitPoint, 0xff4500, GAME_CONFIG.SPELL_PARAMS.FIREBALL_RADIUS); 

@@ -261,9 +261,13 @@ const GAME_CONFIG = {
         MANA_REGEN: 2.0,                // Mana regenerated per second
         STAMINA_REGEN: 3.0,             // Stamina regenerated per second
         PUSH_FORCE: 900,                // Shockwave horizontal knockback force
+        MISSILE_SPEED: 900,             // Missile projectile speed
         MISSILE_GRAVITY: 300,           // Gravity for missiles
+        PUSH_SPEED: 700,                // Shockwave projectile speed
         PUSH_GRAVITY: 300,              // Gravity for push spell
+        FIREBALL_SPEED: 600,            // Fireball projectile speed
         FIREBALL_GRAVITY: 300,          // Gravity for fireball
+        ARROW_SPEED: 1000,              // Arrow projectile speed
         ARROW_GRAVITY: 5                // Light gravity for arrows
     },
     

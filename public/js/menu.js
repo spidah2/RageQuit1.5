@@ -363,19 +363,15 @@ function reinitializeTeamSelection() {
             const team = option.dataset.team;
             selectedTeam = team;
             
-            // Imposta colore squadra
-            window.myTeam = team;
-            window.myTeamColor = TEAM_COLORS[team];
-            console.log('[MENU] Team changed to:', team, 'Color:', window.myTeamColor.toString(16));
-            
-            // Nascondi selezione squadre e torna al gioco
-            teamSelectionScreen.style.display = 'none';
-            
-            // Aggiorna subito il colore della squadra nel client (non aspettare il server)
+            // Imposta colore squadra SUBITO
             window.myTeam = team;
             window.myTeamColor = TEAM_COLORS[team];
             if (typeof myTeam !== 'undefined') myTeam = team;
             if (typeof myTeamColor !== 'undefined') myTeamColor = TEAM_COLORS[team];
+            console.log('[MENU] Team changed to:', team, 'Color:', window.myTeamColor.toString(16));
+            
+            // Nascondi selezione squadre e torna al gioco
+            teamSelectionScreen.style.display = 'none';
             
             // Riattiva il pointer lock
             if (document.pointerLockElement !== document.body) {
@@ -386,7 +382,15 @@ function reinitializeTeamSelection() {
                 }
             }
             
-            // Emetti evento di cambio squadra al server
+            // FORZA RESPAWN IMMEDIATO con la nuova squadra
+            if (typeof window.respawnPlayer === 'function') {
+                console.log('[MENU] Forcing respawn with team:', team);
+                window.respawnPlayer();
+            } else {
+                console.warn('respawnPlayer not available');
+            }
+            
+            // Emetti evento di cambio squadra al server (in background)
             if (window.socket && typeof window.socket.emit === 'function') {
                 window.socket.emit('changeTeam', team);
             }

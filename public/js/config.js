@@ -104,7 +104,7 @@ const GAME_CONFIG = {
         BEGONE_RADIUS: 45,            // Explosion radius
         BEGONE_VISUAL_RADIUS: 20,     // Visual size
         BEGONE_FORCE_HORIZONTAL: 900, // Knockback force
-        BEGONE_FORCE_VERTICAL: 40,    // Vertical push
+        BEGONE_FORCE_VERTICAL: 300,   // Vertical push (from original repo)
         BEGONE_COLOR: 0xffffff,       // White
         BEGONE_COOLDOWN: 3000,        // ms
         
@@ -116,7 +116,7 @@ const GAME_CONFIG = {
         FIREBALL_LIFETIME: 2000,      // ms
         FIREBALL_CAST_TIME: 0.5,      // seconds
         FIREBALL_RADIUS: 35,          // Explosion radius
-        FIREBALL_FORCE_VERTICAL: 40,  // Vertical push
+        FIREBALL_FORCE_VERTICAL: 600, // Vertical push (from original repo)
         FIREBALL_COLOR: 0xff6600,     // Orange
         FIREBALL_COOLDOWN: 2000,      // ms
         
@@ -155,7 +155,7 @@ const GAME_CONFIG = {
         WHIRLWIND_DMG: 30,            // HP damage
         WHIRLWIND_RADIUS: 25,         // AoE radius (360°)
         WHIRLWIND_COOLDOWN: 2000,     // ms
-        WHIRLWIND_JUMP_FORCE: 50,     // Vertical jump
+        WHIRLWIND_JUMP_FORCE: 150,    // Vertical jump (from original repo)
         WHIRLWIND_EFFECT_DURATION: 500, // ms
         WHIRLWIND_PARTICLES_MIN: 40,
         WHIRLWIND_PARTICLES_MAX: 60,
@@ -197,13 +197,13 @@ const GAME_CONFIG = {
         
         // ===== 13. SALTO (Jump) =====
         JUMP_COST: 5,                 // Stamina cost
-        JUMP_FORCE: 60,               // Vertical force
+        JUMP_FORCE: 200,              // Vertical force (from original repo)
         JUMP_COOLDOWN: 300,           // ms between jumps
         JUMP_GRAVITY: 800,            // Units/sec² fall
         
         // ===== 14. SPRINT =====
         SPRINT_MULTIPLIER: 1.4,       // 140% speed
-        SPRINT_BASE_SPEED: 400,       // Units/sec
+        SPRINT_BASE_SPEED: 400,       // Units/sec (from original repo - matches PHYSICS.SPEED)
         SPRINT_STAMINA_COST: 1.0,     // Per second
         
         // ===== RESOURCE REGENERATION =====
@@ -215,22 +215,32 @@ const GAME_CONFIG = {
         FLOATING_TEXT_HIT_COLOR: '#ff3333',
         FLOATING_TEXT_BLOCK_COLOR: '#aaa',
         FLOATING_TEXT_HEAL_COLOR: '#00ff00',
-        FLOATING_TEXT_KILL_COLOR: '#ff0000'
+        FLOATING_TEXT_KILL_COLOR: '#ff0000',
+        
+        // ===== ALIASES FOR SPELL PUSH UP FORCES =====
+        PUSH_UP_FORCE: 300,            // Alias for BEGONE_FORCE_VERTICAL (Shockwave vertical push)
+        FIREBALL_UP_FORCE: 600,        // Alias for FIREBALL_FORCE_VERTICAL (Fireball vertical push)
+        
+        // ===== ALIASES FOR PHYSICS CONSTANTS =====
+        PUSH_FORCE: 900,               // Alias for BEGONE_FORCE_HORIZONTAL (Shockwave horizontal knockback)
+        PUSH_RADIUS: 45,               // Alias for BEGONE_RADIUS
+        PUSH_VISUAL_RADIUS: 20         // Alias for BEGONE_VISUAL_RADIUS
     },
     
     // ===== PHYSICS & MOVEMENT CONSTANTS =====
     PHYSICS: {
-        GRAVITY: 50,                    // Gravity acceleration (units/sec²)
-        SPEED: 200,                      // Base movement speed
-        SPRINT_MULTIPLIER: 1.4,          // Sprint speed multiplier
-        SPRINT_STAMINA_COST: 30,         // Stamina cost per second while sprinting
-        BLOCK_STAMINA_COST: 5,           // Stamina cost per second while blocking
-        MANA_REGEN: 2.0,                 // Mana regenerated per second
-        STAMINA_REGEN: 3.0,              // Stamina regenerated per second
-        MISSILE_GRAVITY: 300,            // Gravity for missiles
-        PUSH_GRAVITY: 300,               // Gravity for push spell
-        FIREBALL_GRAVITY: 300,           // Gravity for fireball
-        ARROW_GRAVITY: 5                 // Light gravity for arrows
+        GRAVITY: 800,                   // Gravity acceleration (from original repo)
+        SPEED: 400,                     // Base movement speed (from original repo)
+        SPRINT_MULTIPLIER: 1.4,         // Sprint speed multiplier
+        SPRINT_STAMINA_COST: 30,        // Stamina cost per second while sprinting
+        BLOCK_STAMINA_COST: 5,          // Stamina cost per second while blocking
+        MANA_REGEN: 2.0,                // Mana regenerated per second
+        STAMINA_REGEN: 3.0,             // Stamina regenerated per second
+        PUSH_FORCE: 900,                // Shockwave horizontal knockback force
+        MISSILE_GRAVITY: 300,           // Gravity for missiles
+        PUSH_GRAVITY: 300,              // Gravity for push spell
+        FIREBALL_GRAVITY: 300,          // Gravity for fireball
+        ARROW_GRAVITY: 5                // Light gravity for arrows
     },
     
     // ===== DEBUG FLAGS =====

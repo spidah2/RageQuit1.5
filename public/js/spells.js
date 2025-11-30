@@ -153,7 +153,7 @@ function applyConversionTick(type) {
             const now = performance.now();
             if (now - lastWhirlwindTime < GAME_CONFIG.SPELL_PARAMS.WHIRLWIND_COOLDOWN) { addToLog("Whirlwind recharging...", "#aaa"); return; }
             if (playerStats.stamina < GAME_CONFIG.SPELL_PARAMS.WHIRLWIND_COST) { addToLog("Insufficient Stamina!", "#555"); return; }
-            playerStats.stamina -= GAME_CONFIG.SPELL_PARAMS.WHIRLWIND_COST; lastWhirlwindTime = now; if (!canJump) return; velocity.y += 150; canJump = false; isWhirlwinding = true; setTimeout(() => { isWhirlwinding = false; }, 500);
+            playerStats.stamina -= GAME_CONFIG.SPELL_PARAMS.WHIRLWIND_COST; lastWhirlwindTime = now; if (!canJump) return; velocity.y += GAME_CONFIG.SPELL_PARAMS.WHIRLWIND_JUMP_FORCE; canJump = false; isWhirlwinding = true; setTimeout(() => { isWhirlwinding = false; }, 500);
             
             spawnParticles(playerMesh.position, 0xffffff, 40, 60, 0.6, false);
             

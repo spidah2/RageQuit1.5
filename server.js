@@ -3,6 +3,7 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const GameStateManager = require('./server/GameStateManager');
 
 // ===== CONFIGURAZIONE SOCKET.IO =====
 // Rileva ambiente e configura CORS dinamicamente
@@ -67,32 +68,10 @@ const SERVER_CONFIG = {
 let players = {};
 let lastSeen = {};
 let serverStartTime = Date.now();
-let playerKills = {}; // Tracking dei kill per player {playerId: killCount}
-let teamKills = { red: 0, black: 0, green: 0, purple: 0 }; // Tracking dei kill per team
 
-const TEAM_COLORS = SERVER_CONFIG.TEAM_COLORS;
-
-// Helper per calcolare distanza 3D
-function distance3D(pos1, pos2) {
-    const dx = pos1.x - pos2.x;
-    const dy = pos1.y - pos2.y;
-    const dz = pos1.z - pos2.z;
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-// Server-side hit detection autoritativo
-function validateHit(shooterId, targetId, hitPosition) {
-    const shooter = players[shooterId];
-    const target = players[targetId];
-    
-    if (!shooter || !target || target.isDead) return false;
-    
-    // Verifica che il target sia abbastanza vicino alla posizione dell'hit
-    const dist = distance3D(target.position, hitPosition);
-    const maxHitDistance = 10; // Tolleranza massima per lag
-    
-    return dist <= maxHitDistance;
-}
+// ===== GAME STATE MANAGER - CENTRALIZZATO =====
+// Crea un'istanza del game state manager
+const gameStateManager = new GameStateManager();
 
 // Serviamo i file statici dalla cartella "public"
 app.use(express.static(path.join(__dirname, 'public')));
@@ -140,6 +119,11 @@ app.get('/health', (req, res) => {
     uptime: Date.now() - serverStartTime
   });
 });
+
+// ===== CONNETTI GAME STATE MANAGER A PLAYERS =====
+// Questo deve accadere DOPO che players è definito ma PRIMA dei socket handlers
+gameStateManager.setActivePlayers(players);
+console.log('[Server] GameStateManager initialized and linked to players object');
 
 // --- LOGICA MULTIPLAYER ORIGINALE ---
 
@@ -321,40 +305,45 @@ io.on('connection', (socket) => {
 
     socket.on('playerPushed', (pushData) => {
         const targetId = pushData.targetId;
-        if (players[targetId]) {
-            let actualDamage = 0;
-            if (pushData.damage) {
-                // Assicurati che il danno sia sempre positivo
-                actualDamage = Math.max(0, pushData.damage);
-                players[targetId].hp -= actualDamage;
-                // Clamp HP a 0 per evitare valori negativi
-                players[targetId].hp = Math.max(0, players[targetId].hp);
-            }
-            // Emit to the target player so they can execute the push effect
-            io.to(targetId).emit('playerPushed', {
-                forceY: pushData.forceY, 
-                forceVec: pushData.forceVec, 
-                pushOrigin: pushData.pushOrigin
-            });
+        
+        // Usa GameStateManager per applicare danno da push (se presente)
+        let pushResult = null;
+        if (pushData.damage && pushData.damage > 0) {
+            pushResult = gameStateManager.validateAndApplyHit(
+                socket.id,
+                targetId,
+                { damage: pushData.damage, hitPosition: players[targetId]?.position }
+            );
+        } else {
+            // Push senza danno - solo knockback
+            pushResult = gameStateManager.applyKnockback(targetId, pushData.forceY || 300);
+        }
+        
+        if (!pushResult || !pushResult.success) {
+            return; // Push non validato, ignora
+        }
+        
+        // Emit to the target player so they can execute the push effect
+        io.to(targetId).emit('playerPushed', {
+            forceY: pushData.forceY, 
+            forceVec: pushData.forceVec, 
+            pushOrigin: pushData.pushOrigin
+        });
+        
+        // Se c'era danno, propaga gli effetti
+        if (pushData.damage && pushData.damage > 0) {
+            const actualDamage = pushResult.damage || pushData.damage;
+            const targetHp = pushResult.targetHp || players[targetId].hp;
             
             // Emit health update and damage effect to all players
-            io.emit('updateHealth', { id: targetId, hp: players[targetId].hp });
+            io.emit('updateHealth', { id: targetId, hp: targetHp });
             if (actualDamage > 0) {
-                io.emit('remoteDamageTaken', { id: targetId }); // Notify all for blood/damage effect
+                io.emit('remoteDamageTaken', { id: targetId });
             }
 
-            if (players[targetId].hp <= 0 && !players[targetId].isDead) {
-                players[targetId].isDead = true;
-                console.log(`[SERVER] Player ${targetId} morto (PUSH) - broadcasting a tutti`);
-                
-                // Tracking kill per killer
-                if (!playerKills[socket.id]) playerKills[socket.id] = 0;
-                playerKills[socket.id]++;
-                
-                // Tracking kill per team del killer
-                if (players[socket.id] && players[socket.id].team && teamKills[players[socket.id].team] !== undefined) {
-                    teamKills[players[socket.id].team]++;
-                }
+            // Se è un kill, propaga e aggiorna stats
+            if (pushResult.killConfirmed) {
+                console.log(`[SERVER] ${socket.id} killed ${targetId} (PUSH) - broadcasting death event`);
                 
                 // Broadcast morte a TUTTI i client immediatamente
                 io.emit('playerDied', { 
@@ -363,10 +352,11 @@ io.on('connection', (socket) => {
                     position: players[targetId].position
                 });
                 
-                // Invia aggiornamento punteggi a tutti
+                // Invia aggiornamento punteggi a tutti (dal GameStateManager)
+                const stats = gameStateManager.getMatchStats();
                 io.emit('matchStats', {
-                    playerKills: playerKills,
-                    teamKills: teamKills
+                    playerKills: stats.playerKills,
+                    teamKills: stats.teamKills
                 });
             }
         }
@@ -375,76 +365,61 @@ io.on('connection', (socket) => {
     socket.on('playerHit', (dmgData) => {
         const targetId = dmgData.targetId;
         
-        // Verifica che il target esista e non sia già morto
-        if (!players[targetId] || players[targetId].isDead || players[targetId].hp <= 0) {
-            console.log(`[HIT REJECTED] ${socket.id} -> ${targetId} (target morto o inesistente)`);
+        // Usa GameStateManager per validare e applicare danno
+        const hitResult = gameStateManager.validateAndApplyHit(
+            socket.id,
+            targetId,
+            { damage: dmgData.damage, hitPosition: dmgData.hitPosition }
+        );
+        
+        // Se validazione fallisce, notifica il client
+        if (!hitResult.success) {
+            console.log(`[HIT REJECTED] ${socket.id} -> ${targetId} (${hitResult.message})`);
             socket.emit('hitRejected', { targetId: targetId });
             return;
         }
         
-        // VALIDAZIONE SERVER-SIDE DELL'HIT
-        if (!validateHit(socket.id, targetId, dmgData.hitPosition || players[targetId]?.position)) {
-            console.log(`[HIT REJECTED] ${socket.id} -> ${targetId} (posizione non valida)`);
-            // Informa il shooter che l'hit è stato respinto
-            socket.emit('hitRejected', { targetId: targetId });
-            return;
-        }
+        // HIT VALIDATO - Propaga gli effetti ai client
+        console.log(`[HIT VALIDATED] ${socket.id} -> ${targetId} (${hitResult.damage} dmg, hp: ${hitResult.targetHp})`);
         
-        if (players[targetId]) {
-            const actualDamage = Math.max(0, dmgData.damage); // Assicurati che sia positivo
-            players[targetId].hp -= actualDamage;
-            
-            // Clamp HP a 0 per evitare valori negativi
-            players[targetId].hp = Math.max(0, players[targetId].hp);
-            
-            console.log(`[HIT VALIDATED] ${socket.id} -> ${targetId} (${actualDamage} dmg, hp: ${players[targetId].hp})`);
-            
-            // Send health update to all
-            io.emit('updateHealth', { id: targetId, hp: players[targetId].hp });
-            
-            // Send specific damage response to the target for local effects (like screen flash)
-            io.to(targetId).emit('playerHitResponse', { damage: actualDamage });
+        // Send health update to all
+        io.emit('updateHealth', { id: targetId, hp: hitResult.targetHp });
+        
+        // Send specific damage response to the target for local effects (like screen flash)
+        io.to(targetId).emit('playerHitResponse', { damage: hitResult.damage });
 
-            // Notify all for blood/damage effect
-            if (actualDamage > 0) {
-                io.emit('remoteDamageTaken', { id: targetId });
-            }
+        // Notify all for blood/damage effect
+        if (hitResult.damage > 0) {
+            io.emit('remoteDamageTaken', { id: targetId });
+        }
+        
+        // Se è un kill, propaga e aggiorna stats
+        if (hitResult.killConfirmed) {
+            console.log(`[SERVER] ${socket.id} killed ${targetId} - broadcasting death event`);
             
-            if (players[targetId].hp <= 0 && !players[targetId].isDead) {
-                players[targetId].isDead = true;
-                console.log(`[SERVER] Player ${targetId} morto (HIT) - broadcasting a tutti`);
-                
-                // Tracking kill per killer
-                if (!playerKills[socket.id]) playerKills[socket.id] = 0;
-                playerKills[socket.id]++;
-                
-                // Tracking kill per team del killer
-                if (players[socket.id] && players[socket.id].team && teamKills[players[socket.id].team] !== undefined) {
-                    teamKills[players[socket.id].team]++;
-                }
-                
-                // Broadcast morte a TUTTI i client immediatamente
-                io.emit('playerDied', { 
-                    id: targetId, 
-                    killerId: socket.id,
-                    position: players[targetId].position
-                });
-                
-                // Invia aggiornamento punteggi a tutti
-                io.emit('matchStats', {
-                    playerKills: playerKills,
-                    teamKills: teamKills
-                });
-            }
+            // Broadcast morte a TUTTI i client immediatamente
+            io.emit('playerDied', { 
+                id: targetId, 
+                killerId: socket.id,
+                position: players[targetId].position
+            });
+            
+            // Invia aggiornamento punteggi a tutti (dal GameStateManager)
+            const stats = gameStateManager.getMatchStats();
+            io.emit('matchStats', {
+                playerKills: stats.playerKills,
+                teamKills: stats.teamKills
+            });
         }
     });
     
     socket.on('playerHealed', (healData) => {
         // IMPORTANTE: playerHealed deve applicare SOLO al player che la invia, non agli avversari
-        if (players[socket.id]) {
-            const healAmount = Math.max(0, healData.amount || 0);
-            players[socket.id].hp = Math.min(players[socket.id].maxHp, players[socket.id].hp + healAmount);
-            io.emit('updateHealth', { id: socket.id, hp: players[socket.id].hp });
+        // Usa GameStateManager per applicare cura
+        const healResult = gameStateManager.applyHealing(socket.id, healData.amount);
+        
+        if (healResult.success) {
+            io.emit('updateHealth', { id: socket.id, hp: healResult.newHp });
         }
     });
     

@@ -339,11 +339,11 @@ function fireHitscan() {
 
             const raycaster = new THREE.Raycaster(); raycaster.setFromCamera(new THREE.Vector2(0, 0), camera); 
             const hits = raycaster.intersectObjects([...obstacles], true);
-            let targetPoint;
-            if(hits.length > 0) { targetPoint = hits[0].point; } else { const camDir2 = new THREE.Vector3(); camera.getWorldDirection(camDir2); targetPoint = camera.position.clone().add(camDir2.multiplyScalar(100)); }
             
-            // Calcola la direzione dal punto di spawn al target
-            let velocityDir = new THREE.Vector3().subVectors(targetPoint, spawnPos).normalize();
+            // IMPORTANTE: Usa sempre camera.getWorldDirection() per la direzione della spell
+            // Questo assicura che la spell vada ESATTAMENTE dove guarda la camera, indipendentemente da dove spawna
+            let velocityDir = new THREE.Vector3(); 
+            camera.getWorldDirection(velocityDir);
             
             // FIREBALL: add gentle upward component, let gravity pull down fast
             if (type === 3) {

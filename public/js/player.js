@@ -531,7 +531,7 @@ function updatePhysics(delta) {
 function updateCamera() {
             const headPos = playerMesh.position.clone().add(new THREE.Vector3(0,8.5,0));
             if (weaponMode === 'ranged' || weaponMode === 'bow') { 
-                camera.position.copy(headPos).addScaledVector(new THREE.Vector3(0,0,-1).applyEuler(euler), 0.5); 
+                camera.position.copy(headPos).addScaledVector(new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(euler.x, euler.y, euler.z, 'YXZ')), 0.5); 
                 camera.quaternion.setFromEuler(euler); 
                 playerMesh.visible = true; 
             } else { 

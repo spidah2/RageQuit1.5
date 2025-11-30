@@ -750,3 +750,8 @@ function updateCamera() {
             }
         }
 
+// ===== GLOBAL EXPORTS =====
+// Espone funzioni utilizzate da altri file (socketHandlers.js, ecc)
+window.createFloatingText = createFloatingText;
+window.addFloatingText = createFloatingText; // Alias per compatibilità backwards
+

@@ -22,7 +22,7 @@ class GameStateManager {
         this.activePlayers = {};     // Riferimento a players object dal server
         
         // ===== VALIDATION CONSTANTS =====
-        this.HIT_VALIDATION_DISTANCE = 15;      // Max distance for hit to be valid
+        this.HIT_VALIDATION_DISTANCE = 25;      // Max distance for hit to be valid (increased for thin projectiles like arrows)
         this.FRIENDLY_FIRE_ENABLED = false;     // Disabilita friendly fire tra squadre
         
         console.log('[GameStateManager] Inizializzato - Gestione centralizzata dello stato di gioco');

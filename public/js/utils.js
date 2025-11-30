@@ -252,3 +252,8 @@ if (typeof module !== 'undefined' && module.exports) {
         syncWindowGlobals
     };
 }
+
+// ===== GLOBAL EXPOSURE =====
+// Espone funzioni globalmente per accesso da altri file
+window.logGame = logGame;
+window.distance3D = distance3D;

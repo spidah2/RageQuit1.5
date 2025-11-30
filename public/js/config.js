@@ -155,7 +155,7 @@ const GAME_CONFIG = {
         WHIRLWIND_DMG: 30,            // HP damage
         WHIRLWIND_RADIUS: 25,         // AoE radius (360°)
         WHIRLWIND_COOLDOWN: 2000,     // ms
-        WHIRLWIND_JUMP_FORCE: 40,     // Vertical jump
+        WHIRLWIND_JUMP_FORCE: 50,     // Vertical jump
         WHIRLWIND_EFFECT_DURATION: 500, // ms
         WHIRLWIND_PARTICLES_MIN: 40,
         WHIRLWIND_PARTICLES_MAX: 60,
@@ -197,7 +197,7 @@ const GAME_CONFIG = {
         
         // ===== 13. SALTO (Jump) =====
         JUMP_COST: 5,                 // Stamina cost
-        JUMP_FORCE: 40,               // Vertical force
+        JUMP_FORCE: 60,               // Vertical force
         JUMP_COOLDOWN: 300,           // ms between jumps
         JUMP_GRAVITY: 800,            // Units/sec² fall
         
@@ -221,7 +221,7 @@ const GAME_CONFIG = {
     // ===== PHYSICS & MOVEMENT CONSTANTS =====
     PHYSICS: {
         GRAVITY: 50,                    // Gravity acceleration (units/sec²)
-        SPEED: 120,                      // Base movement speed
+        SPEED: 200,                      // Base movement speed
         SPRINT_MULTIPLIER: 1.4,          // Sprint speed multiplier
         SPRINT_STAMINA_COST: 30,         // Stamina cost per second while sprinting
         BLOCK_STAMINA_COST: 5,           // Stamina cost per second while blocking

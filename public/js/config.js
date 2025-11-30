@@ -81,6 +81,30 @@ const GAME_CONFIG = {
         HEAL: 8
     },
     
+    // ===== SPELL COSTS (indexed by spell ID) =====
+    SPELL_COSTS: {
+        1: 5,    // MISSILE
+        2: 15,   // BEGONE
+        3: 20,   // FIREBALL
+        4: 5,    // IMPALE
+        5: 5,    // ARROW
+        6: 5,    // MELEE
+        7: 10,   // WHIRLWIND
+        8: 10    // HEAL
+    },
+    
+    // ===== SPELL CAST TIMES (indexed by spell ID) =====
+    SPELL_CAST_TIMES: {
+        1: 0.2,   // MISSILE - Fast cast
+        2: 0.5,   // BEGONE - Medium cast
+        3: 0.5,   // FIREBALL - Medium cast
+        4: 0.0,   // IMPALE - Instant
+        5: 0.3,   // ARROW - Medium cast
+        6: 0.0,   // MELEE - Instant
+        7: 0.0,   // WHIRLWIND - Instant
+        8: 0.0    // HEAL - Instant
+    },
+    
     // ===== SPELL PARAMETERS (CONSOLIDATED) - Fonte unica di verità =====
     SPELL_PARAMS: {
         

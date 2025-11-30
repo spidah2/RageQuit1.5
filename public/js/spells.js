@@ -319,9 +319,13 @@ function fireHitscan() {
                  // Spell parte dalla punta dello staff
                  spawnPos = getStaffTip();
                  
-                 // Fireball: spawn più alto per evitare clipping con il player
+                 // Alza leggermente tutti gli spell per evitare di sparare a terra
+                 // Missile, Begone, Impale: +0.8
+                 // Fireball: +1.5 (più alto per evitare clipping)
                  if (type === 3) {
                     spawnPos.y += 1.5;
+                 } else {
+                    spawnPos.y += 0.8; // Missile(1), Begone(2), Impale(4)
                  }
                  
                  // Se il player è troppo vicino a un nemico, sposta la spawn più avanti

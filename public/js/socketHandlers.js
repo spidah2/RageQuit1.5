@@ -306,9 +306,16 @@ function registerAllSocketHandlers(socket) {
                 if (data.type === 4) {
                     spawnStoneSpikes(data.origin, false);
                 } else if (data.origin && data.direction) {
-                    // Spawn visible projectile
+                    // Spawn visible projectile with height offset
+                    const spawnPos = new THREE.Vector3(data.origin.x, data.origin.y, data.origin.z);
+                    // Alza leggermente tutti gli spell per evitare di sparare a terra
+                    if (data.type === 3) {
+                        spawnPos.y += 1.5; // Fireball più alto
+                    } else {
+                        spawnPos.y += 0.8; // Missile, Begone, Arrow
+                    }
                     spawnEnemyProjectile(
-                        new THREE.Vector3(data.origin.x, data.origin.y, data.origin.z),
+                        spawnPos,
                         new THREE.Vector3(data.direction.x, data.direction.y, data.direction.z),
                         data.type
                     );

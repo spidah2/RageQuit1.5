@@ -118,7 +118,26 @@ function registerAllSocketHandlers(socket) {
         
         if (typeof myTeam !== 'undefined') myTeam = data.team;
         if (typeof myTeamColor !== 'undefined') myTeamColor = data.teamColor;
-        if (typeof updatePlayerColor === 'function') updatePlayerColor();
+        
+        // Aggiorna il colore visuale del giocatore
+        if (typeof updatePlayerColor === 'function') {
+            updatePlayerColor();
+        } else if (playerMesh) {
+            // Fallback: aggiorna direttamente il mesh se updatePlayerColor non disponibile
+            playerMesh.traverse((child) => {
+                if (child.isMesh && child.material && child.material.color) {
+                    const isMetalPiece = (child.material.color.getHex() === 0x95a5a6) || 
+                                        (child.material.color.getHex() === 0x555555) ||
+                                        (child.material.color.getHex() === 0x111111);
+                    if (!isMetalPiece) {
+                        child.material.color.setHex(data.teamColor);
+                        if (child.material.emissive) {
+                            child.material.emissive.setHex(data.teamColor);
+                        }
+                    }
+                }
+            });
+        }
         
         addToLog(`You switched to team ${data.team}`, 'server-msg');
     });

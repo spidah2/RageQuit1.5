@@ -89,6 +89,7 @@ function createPlayer() {
 }
 
 function updatePlayerColor() {
+    // SAFETY CHECK: Prevent crash if playerMesh not initialized yet
     if (!playerMesh) return;
 
     const currentColor = typeof myTeamColor !== 'undefined' ? myTeamColor : 0x2c3e50;
@@ -118,6 +119,12 @@ function updatePlayerColor() {
 }
 
 function createSword() {
+            // SAFETY CHECK: Ensure playerLimbs is initialized before attaching weapons
+            if (!playerLimbs || !playerLimbs.armR) {
+                console.warn('[CREATE SWORD] PlayerLimbs not initialized, deferring weapon creation');
+                return;
+            }
+            
             swordContainer = new THREE.Group();
             const blade = new THREE.Mesh(new THREE.BoxGeometry(0.8, 18, 0.2), new THREE.MeshStandardMaterial({color:0xecf0f1, metalness:0.9})); blade.position.y=10; swordContainer.add(blade);
             const guard = new THREE.Mesh(new THREE.BoxGeometry(6, 0.8, 0.8), new THREE.MeshStandardMaterial({color:0xf39c12})); guard.position.y=1; swordContainer.add(guard);
@@ -135,6 +142,12 @@ function createSword() {
         }
 
 function createStaff() {
+            // SAFETY CHECK: Ensure playerLimbs is initialized before attaching weapons
+            if (!playerLimbs || !playerLimbs.armR) {
+                console.warn('[CREATE STAFF] PlayerLimbs not initialized, deferring weapon creation');
+                return;
+            }
+            
             staffContainer = new THREE.Group();
             staffContainer.add(new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.3,22), new THREE.MeshStandardMaterial({color:0x3e2723}))).position.y=6;
             const head = new THREE.Mesh(new THREE.TorusGeometry(1.5,0.3,8,20), new THREE.MeshStandardMaterial({color:0xffd700})); head.position.y=17; head.rotation.y=Math.PI/2; staffContainer.add(head);
@@ -143,6 +156,12 @@ function createStaff() {
         }
 
 function createBow() {
+            // SAFETY CHECK: Ensure playerLimbs is initialized before attaching weapons
+            if (!playerLimbs || !playerLimbs.armL) {
+                console.warn('[CREATE BOW] PlayerLimbs not initialized, deferring weapon creation');
+                return;
+            }
+            
             bowContainer = new THREE.Group();
             const bowCurve = new THREE.Mesh(new THREE.TorusGeometry(3, 0.2, 8, 12, Math.PI), new THREE.MeshStandardMaterial({color: 0x8B4513}));
             bowCurve.rotation.z = -Math.PI/2;
@@ -159,6 +178,12 @@ function createBow() {
         }
 
 function createShield() {
+            // SAFETY CHECK: Ensure playerLimbs is initialized before attaching weapons
+            if (!playerLimbs || !playerLimbs.armL) {
+                console.warn('[CREATE SHIELD] PlayerLimbs not initialized, deferring weapon creation');
+                return;
+            }
+            
             shieldMesh = new THREE.Mesh(new THREE.BoxGeometry(4, 8, 1), new THREE.MeshBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
             shieldMesh.position.set(3, -2, -0.5); // Spostato in avanti per evitare di clippare sotto il body
             shieldMesh.rotation.y = -Math.PI/2;
@@ -251,6 +276,11 @@ function spawnGlowEffect(color) {
         }
 
 function updateAnimations(delta) {
+            // SAFETY CHECK: Prevent crash if playerLimbs not initialized yet
+            if (!playerLimbs || !playerLimbs.armR || !playerLimbs.armL || !playerLimbs.legL || !playerLimbs.legR) {
+                return;
+            }
+            
             const time = performance.now() * 0.005;
             const isMoving = moveForward || moveBackward || moveLeft || moveRight;
             
@@ -419,6 +449,11 @@ function toggleWeapon(force) {
         }
 
 function updateSwordAnimation(delta) {
+            // SAFETY CHECK: Prevent crash if playerLimbs or swordContainer not initialized yet
+            if (!playerLimbs || !playerLimbs.armR || !swordContainer) {
+                return;
+            }
+            
             if (isWhirlwinding) {
                 const speed = 20; swordContainer.rotation.z = -Math.PI/2; swordContainer.rotation.y += delta * speed; swordContainer.rotation.x = Math.PI/2;
                 playerLimbs.armR.rotation.x = -Math.PI/2; playerLimbs.armL.rotation.x = -Math.PI/2; return; 

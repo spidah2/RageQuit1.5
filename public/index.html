@@ -195,17 +195,8 @@
         <button id="close-keybinds">CLOSE</button>
     </div>
 
-    <!-- Carica THREE.js e Socket.IO in modo sincrono -->
-    <script src="https://unpkg.com/three@0.170.0/build/three.min.js"></script>
-    <script>
-        // Check THREE.js loading
-        if (typeof THREE === 'undefined') {
-            console.error('[THREE] r170 failed, loading r128 fallback');
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
-        } else {
-            console.log('[THREE] Version r' + THREE.REVISION + ' loaded successfully');
-        }
-    </script>
+    <!-- Carica THREE.js stabile r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
     <!-- Carica config e utils PRIMA di tutti gli altri moduli -->

@@ -78,18 +78,15 @@ class AssetManager {
         const tunicaMat = new THREE.MeshLambertMaterial({
             color: teamColor,
             emissive: teamColor,
-            emissiveIntensity: 0.4,
-            flatShading: true
+            emissiveIntensity: 0.4
         });
         const staffMat = new THREE.MeshLambertMaterial({
-            color: 0x8B4513, // Marrone legno
-            flatShading: true
+            color: 0x8B4513 // Marrone legno
         });
         const goldMat = new THREE.MeshLambertMaterial({
             color: 0xFFD700,
             emissive: 0xFFD700,
-            emissiveIntensity: 0.5,
-            flatShading: true
+            emissiveIntensity: 0.5
         });
 
         // TUNICA (cilindro al posto del torso)
@@ -170,8 +167,7 @@ class AssetManager {
         const hatMat = new THREE.MeshLambertMaterial({
             color: 0x1a0033, // Viola scuro
             emissive: 0x550055,
-            emissiveIntensity: 0.3,
-            flatShading: true
+            emissiveIntensity: 0.3
         });
         const hat = new THREE.Mesh(hatGeom, hatMat);
         hat.position.y = 2.0;
@@ -207,12 +203,10 @@ class AssetManager {
         const armorMat = new THREE.MeshLambertMaterial({
             color: teamColor,
             emissive: teamColor,
-            emissiveIntensity: 0.3,
-            flatShading: true
+            emissiveIntensity: 0.3
         });
         const metalMat = new THREE.MeshLambertMaterial({
-            color: 0x95a5a6,
-            flatShading: true
+            color: 0x95a5a6
         });
 
         // TORSO
@@ -288,13 +282,11 @@ class AssetManager {
         const armorMat = new THREE.MeshLambertMaterial({
             color: teamColor,
             emissive: 0x000000,
-            emissiveIntensity: 0.1,
-            flatShading: true
+            emissiveIntensity: 0.1
         });
         const clothMat = new THREE.MeshLambertMaterial({
             color: 0x1a1a1a, // Nero quasi puro
-            emissive: 0x0a0a0a,
-            flatShading: true
+            emissive: 0x0a0a0a
         });
 
         // TORSO (sottile, snello)
@@ -394,18 +386,15 @@ class AssetManager {
         const skinMat = new THREE.MeshLambertMaterial({
             color: 0xAA6644, // Pelle marrone
             emissive: 0x220000,
-            emissiveIntensity: 0.15,
-            flatShaking: true
+            emissiveIntensity: 0.15
         });
         const armorMat = new THREE.MeshLambertMaterial({
             color: teamColor,
             emissive: teamColor,
-            emissiveIntensity: 0.25,
-            flatShading: true
+            emissiveIntensity: 0.25
         });
         const spaulderMat = new THREE.MeshLambertMaterial({
-            color: 0x556B2F, // Colore sporco/marrone
-            flatShading: true
+            color: 0x556B2F // Colore sporco/marrone
         });
 
         // TORSO (GRANDE E MASSICCIO)

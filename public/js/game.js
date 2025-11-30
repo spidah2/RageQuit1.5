@@ -826,8 +826,8 @@ let socket = null;
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 renderer.toneMappingExposure = 1.0;
             } else {
-                renderer.gammaOutput = true;
-                renderer.gammaFactor = 2.2;
+                // r128 e versioni precedenti
+                renderer.outputEncoding = THREE.sRGBEncoding;
             }
             console.log('[RENDERER] THREE.js r' + THREE.REVISION + ' inizializzato');
             renderer.domElement.style.position = 'fixed';

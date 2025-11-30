@@ -146,21 +146,23 @@ function initMenu() {
     
     // === UNLOCK AUDIO CON PRIMO CLICK ===
     // Il browser blocca l'autoplay finché l'utente non interagisce
-    // Questo listener avvia la musica al primo click
+    // Questo listener avvia la musica al primo click o keydown
     function unlockAudioOnFirstInteraction() {
         const menuMusic = document.getElementById('menu-music');
         if (menuMusic && menuMusicState && menuMusic.paused) {
             menuMusic.volume = 0.15;
             menuMusic.play().then(() => {
-                console.log('[AUDIO] Musica sbloccata dopo primo click');
+                console.log('[AUDIO] Musica sbloccata dopo interazione utente');
             }).catch(e => console.warn('[AUDIO] Failed to play:', e));
         }
-        // Rimuovi il listener dopo il primo click
+        // Rimuovi entrambi i listener dopo la prima interazione
         document.removeEventListener('click', unlockAudioOnFirstInteraction);
+        document.removeEventListener('keydown', unlockAudioOnFirstInteraction);
     }
     
-    // Aggiungi listener al primo click
-    document.addEventListener('click', unlockAudioOnFirstInteraction, { once: true });
+    // Aggiungi listener per click e keydown (il primo che viene triggerato rimuove entrambi)
+    document.addEventListener('click', unlockAudioOnFirstInteraction);
+    document.addEventListener('keydown', unlockAudioOnFirstInteraction);
     
     // === BOTTONE MUSICA ===
     // Semplice toggle ON/OFF della musica
@@ -169,16 +171,6 @@ function initMenu() {
         menuAudioBtn.addEventListener('click', () => {
             toggleMenuMusic();
         });
-        
-        // Avvia la musica automaticamente all'apertura del menu (fallback se il click non funziona)
-        if (menuMusicState) {
-            const menuMusic = document.getElementById('menu-music');
-            if (menuMusic && menuMusic.paused) {
-                menuMusic.volume = 0.15;
-                menuMusic.play().catch(e => console.warn('Failed to play:', e));
-                console.log('[AUDIO] Musica avviata automaticamente');
-            }
-        }
     }
     
     // Bottone Comandi nel menu - apre il pannello keybinds

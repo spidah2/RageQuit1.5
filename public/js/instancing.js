@@ -28,8 +28,7 @@ function createInstancedObstacles(obstacleData, scene) {
         }
         
         const material = new THREE.MeshLambertMaterial({ 
-            color: firstObs.color || 0x888888,
-            flatShading: true 
+            color: firstObs.color || 0x888888
         });
         
         // Crea instanced mesh

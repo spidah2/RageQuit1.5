@@ -37,8 +37,8 @@ function createPlayer() {
     // 3. Collegamento: playerMesh = modello visivo, playerStats = dati logica
 
     // Richiedi il modello grafico all'AssetManager
-    if (typeof assetManager !== 'undefined' && assetManager) {
-        playerMesh = assetManager.getPlayerMesh(teamColor);
+    if (typeof window.assetManager !== 'undefined' && window.assetManager) {
+        playerMesh = window.assetManager.getPlayerMesh(teamColor);
         logGame('[CREATE PLAYER] Using AssetManager', 'GAME');
     } else {
         // Fallback se AssetManager non è disponibile
@@ -67,8 +67,8 @@ function updatePlayerColor() {
     console.log('[PLAYER COLOR] Updating player color to:', currentColor.toString(16));
 
     // Usa AssetManager se disponibile
-    if (typeof assetManager !== 'undefined' && assetManager && typeof assetManager.updatePlayerColor === 'function') {
-        assetManager.updatePlayerColor(playerMesh, currentColor);
+    if (typeof window.assetManager !== 'undefined' && window.assetManager && typeof window.assetManager.updatePlayerColor === 'function') {
+        window.assetManager.updatePlayerColor(playerMesh, currentColor);
     } else {
         // Fallback: logica manuale
         playerMesh.traverse((child) => {

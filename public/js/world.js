@@ -2,8 +2,8 @@
 
 function setupWorld() {
     // Usa AssetManager per caricare la mappa
-    if (typeof assetManager !== 'undefined' && assetManager && typeof assetManager.loadMap === 'function') {
-        assetManager.loadMap('team-arena');
+    if (typeof window.assetManager !== 'undefined' && window.assetManager && typeof window.assetManager.loadMap === 'function') {
+        window.assetManager.loadMap('team-arena');
         logGame('[WORLD] Map loaded via AssetManager', 'WORLD');
     } else {
         // Fallback: crea mappa direttamente

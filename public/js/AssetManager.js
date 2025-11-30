@@ -430,8 +430,20 @@ class AssetManager {
     }
 }
 
-// Create global instance if THREE and scene are available
-let assetManager = null;
+// ===== GLOBAL EXPOSURE =====
+// Espone la classe globalmente per accesso da file esterni
+window.AssetManager = AssetManager;
+
+// Crea factory function per istanziazione lazy (quando scene è pronta)
+window.createAssetManager = function(scene) {
+    window.assetManager = new AssetManager(scene);
+    console.log("✅ [SYSTEM] AssetManager istanziato globalmente come window.assetManager");
+    return window.assetManager;
+};
+
+// Tentativo di istanziazione immediata se scene è già disponibile
 if (typeof scene !== 'undefined' && typeof THREE !== 'undefined') {
-    assetManager = new AssetManager(scene);
+    window.assetManager = new AssetManager(scene);
+    console.log("✅ [SYSTEM] AssetManager istanziato globalmente (immediato)");
 }
+

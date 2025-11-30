@@ -1,7 +1,11 @@
 // WorldConfig.js - Configurazione mappa e spawn del gioco
 // Centralizza tutte le coordinate e limiti geografici della mappa
 
-const WORLD_CONFIG = {
+// Proteggi da duplicate loading
+if (typeof window.WORLD_CONFIG !== 'undefined') {
+    console.log("⚠️ [CONFIG] WORLD_CONFIG già caricato, skipping duplicate");
+} else {
+    const WORLD_CONFIG = {
     
     // ===== SPAWN ZONES =====
     // Zone di respawn per ogni squadra - 4 angoli della mappa
@@ -116,3 +120,8 @@ const WORLD_CONFIG = {
         GRAVITY: 800  // Units/sec²
     }
 };
+
+// Esponi globalmente
+window.WORLD_CONFIG = WORLD_CONFIG;
+console.log("✅ [CONFIG] WORLD_CONFIG caricato correttamente");
+}

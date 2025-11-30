@@ -1,7 +1,11 @@
 // GameConfig.js - Configurazione completa del sistema di gioco
 // Centralizza spell, risorse, costi e tutti i parametri di gameplay
 
-const GAME_CONFIG = {
+// Proteggi da duplicate loading
+if (typeof window.GAME_CONFIG !== 'undefined') {
+    console.log("⚠️ [CONFIG] GAME_CONFIG già caricato, skipping duplicate");
+} else {
+    const GAME_CONFIG = {
     
     // ===== GAME SETTINGS =====
     MAX_PLAYERS: 10,
@@ -274,6 +278,11 @@ const GAME_CONFIG = {
         SPELL_TRACE: false
     }
 };
+
+// Esponi globalmente
+window.GAME_CONFIG = GAME_CONFIG;
+console.log("✅ [CONFIG] GAME_CONFIG caricato correttamente");
+}
 
 // Export per compatibilità
 if (typeof module !== 'undefined' && module.exports) {

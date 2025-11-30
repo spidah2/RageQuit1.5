@@ -112,7 +112,7 @@ const GAME_CONFIG = {
         MISSILE_COST: 5,              // Mana cost
         MISSILE_DMG: 10,              // HP damage
         MISSILE_SPEED: 900,           // Units/sec
-        MISSILE_GRAVITY: 300,         // Gravity units/sec²
+        MISSILE_GRAVITY: 80,          // Gravity units/sec² (reduced for straighter trajectory)
         MISSILE_LIFETIME: 2000,       // ms
         MISSILE_CAST_TIME: 0.2,       // seconds
         MISSILE_RADIUS: 1.0,          // Collision radius
@@ -136,7 +136,7 @@ const GAME_CONFIG = {
         FIREBALL_COST: 20,            // Mana cost
         FIREBALL_DMG: 30,             // Direct damage HP
         FIREBALL_DMG_SPLASH: 5,       // Splash damage in radius
-        FIREBALL_SPEED: 380,          // Units/sec (reduced for shorter range, more controllable)
+        FIREBALL_SPEED: 500,          // Units/sec (increased for faster projectile)
         FIREBALL_LIFETIME: 2000,      // ms
         FIREBALL_CAST_TIME: 0.5,      // seconds
         FIREBALL_RADIUS: 35,          // Explosion radius
@@ -262,10 +262,10 @@ const GAME_CONFIG = {
         STAMINA_REGEN: 3.0,             // Stamina regenerated per second
         PUSH_FORCE: 900,                // Shockwave horizontal knockback force
         MISSILE_SPEED: 900,             // Missile projectile speed
-        MISSILE_GRAVITY: 300,           // Gravity for missiles
+        MISSILE_GRAVITY: 80,            // Gravity for missiles (reduced for straighter trajectory)
         PUSH_SPEED: 700,                // Shockwave projectile speed
         PUSH_GRAVITY: 300,              // Gravity for push spell
-        FIREBALL_SPEED: 380,            // Fireball projectile speed (reduced for shorter range, more controllable)
+        FIREBALL_SPEED: 500,            // Fireball projectile speed (increased for faster travel)
         FIREBALL_GRAVITY: 600,          // Gravity for fireball (increased for steep arc descent)
         ARROW_SPEED: 1000,              // Arrow projectile speed
         ARROW_GRAVITY: 5                // Light gravity for arrows

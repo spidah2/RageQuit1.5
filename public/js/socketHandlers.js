@@ -139,6 +139,14 @@ function registerAllSocketHandlers(socket) {
             });
         }
         
+        // NUOVO: Respawn il giocatore con la nuova squadra
+        logGame(`Respawning player to squad spawn point...`, 'NETWORK');
+        if (typeof window.respawnPlayer === 'function') {
+            window.respawnPlayer();
+        } else {
+            console.warn('respawnPlayer function not available');
+        }
+        
         addToLog(`You switched to team ${data.team}`, 'server-msg');
     });
 

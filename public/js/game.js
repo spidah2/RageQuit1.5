@@ -1059,6 +1059,9 @@ let socket = null;
             }, 100);
         }
         
+        // Esponi respawnPlayer globalmente per poterla chiamare da socketHandlers
+        window.respawnPlayer = respawnPlayer;
+        
         // Ottieni la posizione di spawn per la squadra
         function getSpawnPosition() {
             const team = window.myTeam;

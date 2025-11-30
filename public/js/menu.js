@@ -291,21 +291,17 @@ function startGame(mode) {
         window.myTeam = selectedTeam;
     }
 
-    // INITIALIZE THE GAME - Fundamental call!
-    if (typeof init === 'function') {
-        console.log('[MENU] Calling init() to start Three.js');
-        init();
-    } else {
-        console.error('[MENU] Function init() not found!');
-    }
-
     // Inizializza multiplayer se disponibile
+    // (Game initialization is automatic when THREE.js loads via initGame())
     if (typeof initMultiplayer === 'function' && mode !== 'pve') {
         // Disconnetti il socket del menu prima di creare il socket del gioco
         if (menuSocket) {
             menuSocket = safeDisconnectSocket(menuSocket);
         }
-        initMultiplayer();
+        // Delay per assicurare che initGame() sia gia' stato chiamato
+        setTimeout(() => {
+            initMultiplayer();
+        }, 100);
     }
 
     // Richiedi pointer lock dopo breve delay

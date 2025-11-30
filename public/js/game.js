@@ -1,3 +1,17 @@
+// GLOBAL VARIABLES - Accessible to all modules (network.js, socketHandlers.js, etc.)
+let socket = null;
+const otherPlayers = {}; 
+let myId = null;
+let myUsername = null;
+let myTeamColor = 0x2c3e50; // Colore dell'armatura del giocatore
+let myGameMode = 'team'; // Solo modalità team
+let myTeam = null; // 'red', 'black', 'green', 'purple'
+let isPvEMode = false; // Flag per modalità PvE
+let aiMonster = null; // Riferimento al mostro IA
+let myKills = 0; // Kill del giocatore
+const playerKills = {}; // Kill di tutti i player {playerId: kills}
+const teamKills = {red: 0, black: 0, green: 0, purple: 0}; // Kill per squadra
+
 // Verifica che THREE.js sia caricato
 if (typeof THREE === 'undefined') {
     console.warn('[GAME] THREE.js not yet loaded, waiting...');
@@ -19,19 +33,9 @@ if (typeof THREE === 'undefined') {
 }
 
 function initGame() {
-
-let socket = null;
-        const otherPlayers = {}; 
-        let myId = null;
-        let myUsername = loadUsername() || "Player";
-        let myTeamColor = 0x2c3e50; // Colore dell'armatura del giocatore
-        let myGameMode = 'team'; // Solo modalità team
-        let myTeam = null; // 'red', 'black', 'green', 'purple'
-        let isPvEMode = false; // Flag per modalità PvE
-        let aiMonster = null; // Riferimento al mostro IA
-        let myKills = loadKills(); // Carica da localStorage
-        const playerKills = {}; // Kill di tutti i player {playerId: kills}
-        const teamKills = {red: 0, black: 0, green: 0, purple: 0}; // Kill per squadra
+        // Inizializza variabili globali
+        myUsername = loadUsername() || "Player";
+        myKills = loadKills(); // Carica da localStorage
         
         const WORLD_SEED = 123456;
         let seed = WORLD_SEED;
@@ -1080,6 +1084,8 @@ let socket = null;
         
         // Esponi respawnPlayer globalmente per poterla chiamare da socketHandlers
         window.respawnPlayer = respawnPlayer;
+        window.addToLog = addToLog;
+        window.updateKillCounter = updateKillCounter;
         
         // Ottieni la posizione di spawn per la squadra
         function getSpawnPosition() {

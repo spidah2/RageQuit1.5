@@ -100,6 +100,7 @@ class AssetManager {
         tunica.position.y = 3.5;
         playerGroup.add(tunica);
         tunica.userData.partName = 'torso';
+        tunica.userData.isTorsoPart = true; // Mark as torso part for visibility hiding
 
         // CINTURA (ORO - decorativa)
         const belt = new THREE.Mesh(
@@ -109,6 +110,7 @@ class AssetManager {
         belt.position.y = 5.0;
         playerGroup.add(belt);
         belt.userData.partName = 'belt';
+        belt.userData.isTorsoPart = true; // Mark as torso part for visibility hiding
 
         // HEAD (sfera per mago)
         const head = this._createWizardHeadMesh(tunicaMat, goldMat);
@@ -215,6 +217,7 @@ class AssetManager {
         torso.position.y = 3.5;
         playerGroup.add(torso);
         torso.userData.partName = 'torso';
+        torso.userData.isTorsoPart = true; // Mark for first-person visibility hiding
 
         // CHEST (metallo)
         const chest = new THREE.Mesh(new THREE.BoxGeometry(4.7, 3.5, 3.2), metalMat);
@@ -296,6 +299,7 @@ class AssetManager {
         torso.position.y = 3.5;
         playerGroup.add(torso);
         torso.userData.partName = 'torso';
+        torso.userData.isTorsoPart = true; // Mark for first-person visibility hiding
 
         // CLOAK (mantello scuro, decorativo)
         const cloak = new THREE.Mesh(new THREE.BoxGeometry(3.2, 5.0, 0.5), clothMat);
@@ -406,6 +410,7 @@ class AssetManager {
         torso.position.y = 4.0;
         playerGroup.add(torso);
         torso.userData.partName = 'torso';
+        torso.userData.isTorsoPart = true; // Mark for first-person visibility hiding
 
         // SPALLACCI (sulle spalle - parte del voluminoso)
         const leftSpaulder = new THREE.Mesh(new THREE.BoxGeometry(2.5, 4.0, 2.5), spaulderMat);

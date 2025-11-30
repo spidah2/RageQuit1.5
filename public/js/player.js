@@ -542,27 +542,33 @@ function toggleWeapon(force) {
             if (bowContainer) bowContainer.visible = isBow;
             
             // Hide body parts in first-person ranged/bow mode, show only arms
-            if (playerMesh) playerMesh.visible = isMelee;
+            // DO NOT hide playerMesh itself - we need it visible so arms are visible
+            // Instead, selectively hide body parts
             if (isRanged || isBow) {
                 stopBlocking();
                 euler.x = 0;
-                // Hide body but keep arms visible
+                // Hide body but keep arms visible in first-person
                 if(playerLimbs.helmet) playerLimbs.helmet.visible = false;
                 if(playerLimbs.torso) playerLimbs.torso.visible = false;
                 if(playerLimbs.legL) playerLimbs.legL.visible = false;
                 if(playerLimbs.legR) playerLimbs.legR.visible = false;
+                // Hide all decorated torso parts (belt, cintura, chest, etc)
                 if(playerMesh) playerMesh.children.forEach(c => { if(c.userData.isTorsoPart) c.visible = false; });
             } else if (isMelee) {
                 // Reset camera pitch per allineamento orizzonte in melee
                 euler.x = 0.43;
+                // Show all body parts in third-person melee
                 if(playerLimbs.helmet) playerLimbs.helmet.visible = true;
                 if(playerLimbs.torso) playerLimbs.torso.visible = true;
                 if(playerLimbs.legL) playerLimbs.legL.visible = true;
                 if(playerLimbs.legR) playerLimbs.legR.visible = true;
+                // Show all decorated torso parts
                 if(playerMesh) playerMesh.children.forEach(c => { if(c.userData.isTorsoPart) c.visible = true; });
             }
             
-            playerLimbs.armL.visible = true; playerLimbs.armR.visible = true;
+            // Always keep arms visible
+            if(playerLimbs.armL) playerLimbs.armL.visible = true; 
+            if(playerLimbs.armR) playerLimbs.armR.visible = true;
 
             const modeText = isMelee ? "MELEE" : (isRanged ? "RANGED" : "ARCO");
             const modeEl = document.getElementById('weapon-mode-text');

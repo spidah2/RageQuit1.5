@@ -104,21 +104,30 @@ class PlayerStateManager {
     }
     
     /**
-     * Increment kill count when player gets a kill
+     * PASSIVE: Update kill count from server (matchStats event)
+     * Does NOT predict or increment - only caches what server sends
+     */
+    updateFromMatchStats(playerKillsData, teamKillsData) {
+        if (playerKillsData && playerKillsData[this.myId] !== undefined) {
+            this.myKills = playerKillsData[this.myId];
+            saveKills(this.myKills);
+        }
+        if (playerKillsData) {
+            Object.assign(this.playerKills, playerKillsData);
+        }
+        if (teamKillsData) {
+            Object.assign(this.teamKills, teamKillsData);
+        }
+        this.updateKillCounter();
+        logGame(`Match stats cached from server: ${this.myKills} kills`, 'GAME');
+    }
+    
+    /**
+     * @deprecated - Use updateFromMatchStats instead (server authoritative)
+     * Kept for backward compatibility but should not be called
      */
     incrementKill(playerId, team) {
-        this.myKills = (this.myKills || 0) + 1;
-        saveKills(this.myKills);
-        this.matchStats.kills++;
-        
-        if (team && this.teamKills.hasOwnProperty(team)) {
-            this.teamKills[team]++;
-        }
-        
-        this.playerKills[playerId] = (this.playerKills[playerId] || 0) + 1;
-        this.updateKillCounter();
-        
-        logGame(`Kill recorded: ${this.myKills} total`, 'GAME', { playerId, team });
+        logGame(`WARNING: incrementKill called - using server-sent matchStats instead`, 'GAME', 'WARNING');
     }
     
     /**

@@ -206,21 +206,16 @@ function registerAllSocketHandlers(socket) {
     });
 
     socket.on('playerHitResponse', (data) => {
-        const diff = -data.damage;
-        playerStats.hp = Math.max(0, playerStats.hp + diff);
-        updateUI();
-        if (diff < 0) flashScreen('red');
-        
-        if (playerStats.hp <= 0 && !playerStats.isDead) {
-            playerStats.isDead = true;
-            playerStats.hp = 0;
-            if (typeof activeConversions !== 'undefined') activeConversions.length = 0;
-            document.getElementById('message').innerHTML = "SEI STATO SCONFITTO<br><span style='font-size:16px'>Premi RESPAWN</span>";
-            document.getElementById('message').style.display = "block";
-            document.exitPointerLock();
-            spawnParticles(playerMesh.position, 0xff0000, 50, 50, 1.0, true);
-            playSound('death');
+        // PASSIVE: Only visual feedback - HP update comes from 'updateHealth' event
+        // Server is authoritative, client never predicts damage
+        if (data.damage > 0) {
+            flashScreen('red');
+            if (!playerStats.isDead) {
+                spawnParticles(playerMesh.position, 0xff0000, 5, 20, 0.5, false);
+            }
         }
+        // NOTE: Death check comes from 'playerDied' event (server authoritative)
+        logGame(`Hit feedback: ${data.damage} damage (visual only, waiting for updateHealth)`, 'COMBAT');
     });
 
     // ===== RESPAWN & DEATH =====
@@ -249,13 +244,13 @@ function registerAllSocketHandlers(socket) {
         }
         
         if (data.killerId === myId) {
-            const victimTeam = otherPlayers[data.id]?.team || null;
-            incrementKill(myId, myTeam);
+            // PASSIVE: Visual feedback only - actual kill count comes from matchStats event
             addFloatingText(playerMesh.position.clone().add(new THREE.Vector3(0, 12, 0)), '☠️ KILL!', 0xff0000, 1.5);
             playSound('kill');
+            logGame('Kill confirmed - waiting for matchStats to update count', 'COMBAT');
         } else if (data.killerId && otherPlayers[data.killerId]) {
-            const killerTeam = otherPlayers[data.killerId].team || null;
-            incrementKill(data.killerId, killerTeam);
+            // PASSIVE: Just log, don't update counter (waiting for matchStats)
+            logGame(`${otherPlayers[data.killerId]?.username || data.killerId} got a kill`, 'COMBAT');
         }
     });
 
@@ -304,10 +299,16 @@ function registerAllSocketHandlers(socket) {
 
     // ===== MATCH STATS =====
     socket.on('matchStats', (data) => {
+        // Update playerStateManager if available (passive cache from server)
+        if (typeof playerStateManager !== 'undefined' && typeof playerStateManager.updateFromMatchStats === 'function') {
+            playerStateManager.updateFromMatchStats(data.playerKills, data.teamKills);
+        }
+        
+        // Sync global variables for backward compatibility
         if (data.playerKills && typeof playerKills !== 'undefined') Object.assign(playerKills, data.playerKills);
         if (data.teamKills && typeof teamKills !== 'undefined') Object.assign(teamKills, data.teamKills);
         if (typeof updateKillCounter === 'function') updateKillCounter();
-        logGame('Match stats updated', 'NETWORK');
+        logGame('Match stats received from server and cached', 'NETWORK');
     });
 
     // ===== ATTACK & EFFECTS =====

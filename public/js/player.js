@@ -89,6 +89,21 @@ function createPlayer() {
 }
 
 /**
+ * Safe limb accessor - returns null if limb doesn't exist
+ * Prevents crashes when accessing limb rotation/position before initialization
+ */
+function getLimb(limbName) {
+    if (!playerLimbs || !playerLimbs[limbName]) return null;
+    const limb = playerLimbs[limbName];
+    // Extra safety: verify it's a valid THREE.Object3D
+    if (!limb || typeof limb.rotation === 'undefined') {
+        console.warn(`⚠️ [LIMB ACCESS] Limb ${limbName} is invalid (null or not an Object3D)`);
+        return null;
+    }
+    return limb;
+}
+
+/**
  * Refresh player limbs references after model changes
  * Called when switching weapons to re-extract limb references from the current playerMesh
  * This ensures updateAnimations always has valid references to the current limbs
@@ -103,6 +118,13 @@ function refreshPlayerLimbs() {
     if (!playerLimbs) {
         playerLimbs = {};
     }
+    
+    // Clear previous limb references to detect if new traversal finds them
+    playerLimbs.armL = null;
+    playerLimbs.armR = null;
+    playerLimbs.legL = null;
+    playerLimbs.legR = null;
+    playerLimbs.head = null;
     
     // Re-extract limbs from playerMesh
     playerMesh.traverse((child) => {
@@ -349,70 +371,112 @@ function updateAnimations(delta) {
             const neutralArmY = 8.0; 
 
             if (weaponMode === 'ranged') {
-                playerLimbs.armR.position.y = 6.0; playerLimbs.armL.position.y = 6.0;
-                playerLimbs.armR.rotation.x = -Math.PI / 2 + Math.sin(time) * 0.05 - (isAttacking ? Math.sin(attackTimer * 2) * 0.5 : 0); 
-                playerLimbs.armR.rotation.z = 0;
-                // Safety check for staffContainer
-                if(staffContainer && staffContainer.userData && staffContainer.userData.gem) {
-                    staffContainer.userData.gem.scale.setScalar(isAttacking ? 1.5 : 1.0);
-                }
-                playerLimbs.armL.rotation.x = -0.5 + Math.cos(time) * 0.1;
-                playerLimbs.legL.rotation.x = isMoving ? Math.sin(time*3)*0.8 : 0; playerLimbs.legR.rotation.x = isMoving ? -Math.sin(time*3)*0.8 : 0;
-            } else if (weaponMode === 'bow') {
-                playerLimbs.armR.position.y = 6.0; playerLimbs.armL.position.y = 6.0;
-                // Braccio sx tiene l'arco (teso in avanti, ma spostato al centro per visuale)
-                playerLimbs.armL.rotation.x = -Math.PI / 2;
-                playerLimbs.armL.rotation.y = -0.2; // slight adjustment
-                playerLimbs.armL.position.x = -0.5; // Center more
-                playerLimbs.armL.position.y = 5.5; // Lower slightly
-                playerLimbs.armL.position.z = 1.5; // Push forward
+                // Ultra-defensive: verify limbs exist before accessing
+                const armR = getLimb('armR');
+                const armL = getLimb('armL');
+                const legL = getLimb('legL');
+                const legR = getLimb('legR');
                 
-                if(castingState.active && castingState.type === 'bow_shot') {
-                     playerLimbs.armR.rotation.x = -Math.PI / 2;
-                     playerLimbs.armR.position.z = -Math.sin(castingState.timer * 2) * 1.5 + 1; // Tira indietro
+                if (armR && armL && legL && legR) {
+                    armR.position.y = 6.0; armL.position.y = 6.0;
+                    armR.rotation.x = -Math.PI / 2 + Math.sin(time) * 0.05 - (isAttacking ? Math.sin(attackTimer * 2) * 0.5 : 0); 
+                    armR.rotation.z = 0;
+                    // Safety check for staffContainer
+                    if(staffContainer && staffContainer.userData && staffContainer.userData.gem) {
+                        staffContainer.userData.gem.scale.setScalar(isAttacking ? 1.5 : 1.0);
+                    }
+                    armL.rotation.x = -0.5 + Math.cos(time) * 0.1;
+                    legL.rotation.x = isMoving ? Math.sin(time*3)*0.8 : 0; legR.rotation.x = isMoving ? -Math.sin(time*3)*0.8 : 0;
                 } else {
-                     playerLimbs.armR.rotation.x = -0.5;
-                     playerLimbs.armR.position.z = 0;
+                    console.warn('⚠️ [ANIMATION] Ranged mode: limbs missing, skipping animation', {armR: !!armR, armL: !!armL, legL: !!legL, legR: !!legR});
+                    return;
                 }
-                playerLimbs.legL.rotation.x = isMoving ? Math.sin(time*3)*0.8 : 0; playerLimbs.legR.rotation.x = isMoving ? -Math.sin(time*3)*0.8 : 0;
-            } else {
-                // Reset positions for melee
-                playerLimbs.armL.position.x = -3; playerLimbs.armL.position.z = 0;
+            } else if (weaponMode === 'bow') {
+                const armR = getLimb('armR');
+                const armL = getLimb('armL');
+                const legL = getLimb('legL');
+                const legR = getLimb('legR');
                 
-                playerLimbs.armR.position.y = neutralArmY; playerLimbs.armL.position.y = neutralArmY;
+                if (armR && armL && legL && legR) {
+                    armR.position.y = 6.0; armL.position.y = 6.0;
+                    // Braccio sx tiene l'arco (teso in avanti, ma spostato al centro per visuale)
+                    armL.rotation.x = -Math.PI / 2;
+                    armL.rotation.y = -0.2; // slight adjustment
+                    armL.position.x = -0.5; // Center more
+                    armL.position.y = 5.5; // Lower slightly
+                    armL.position.z = 1.5; // Push forward
+                    
+                    if(castingState.active && castingState.type === 'bow_shot') {
+                         armR.rotation.x = -Math.PI / 2;
+                         armR.position.z = -Math.sin(castingState.timer * 2) * 1.5 + 1; // Tira indietro
+                    } else {
+                         armR.rotation.x = -0.5;
+                         armR.position.z = 0;
+                    }
+                    legL.rotation.x = isMoving ? Math.sin(time*3)*0.8 : 0; legR.rotation.x = isMoving ? -Math.sin(time*3)*0.8 : 0;
+                } else {
+                    console.warn('⚠️ [ANIMATION] Bow mode: limbs missing, skipping animation', {armR: !!armR, armL: !!armL, legL: !!legL, legR: !!legR});
+                    return;
+                }
+            } else {
+                // Melee mode - ultra-defensive
+                const armR = getLimb('armR');
+                const armL = getLimb('armL');
+                const legL = getLimb('legL');
+                const legR = getLimb('legR');
+                
+                if (!armR || !armL || !legL || !legR) {
+                    console.warn('⚠️ [ANIMATION] Melee mode: limbs missing, skipping animation', {armR: !!armR, armL: !!armL, legL: !!legL, legR: !!legR});
+                    return;
+                }
+                
+                // Reset positions for melee
+                armL.position.x = -3; armL.position.z = 0;
+                
+                armR.position.y = neutralArmY; armL.position.y = neutralArmY;
                 if (!canJump && !playerStats.isFalling) { 
-                    playerLimbs.legL.rotation.x = 0.8; playerLimbs.legR.rotation.x = 0.8; playerLimbs.armL.rotation.x = -0.8; 
-                    if(!isAttacking) playerLimbs.armR.rotation.x = -0.8; 
+                    legL.rotation.x = 0.8; legR.rotation.x = 0.8; armL.rotation.x = -0.8; 
+                    if(!isAttacking) armR.rotation.x = -0.8; 
                 } else if (isMoving) { 
                     const isSprintingActive = isSprinting && playerStats.stamina > 0; const speedMulti = isSprintingActive ? 8 : 4;
                     const armAmp = isSprintingActive ? 1.2 : 0.6; const legAmp = isSprintingActive ? 1.4 : 0.8; const angle = Math.sin(time * speedMulti);
-                    playerLimbs.legL.rotation.x = angle * legAmp; playerLimbs.legR.rotation.x = -angle * legAmp; 
-                    if(playerLimbs.bootL) playerLimbs.bootL.rotation.x = -playerLimbs.legL.rotation.x * 0.6;
-                    if(playerLimbs.bootR) playerLimbs.bootR.rotation.x = -playerLimbs.legR.rotation.x * 0.6;
+                    legL.rotation.x = angle * legAmp; legR.rotation.x = -angle * legAmp; 
+                    const bootL = getLimb('bootL');
+                    const bootR = getLimb('bootR');
+                    if(bootL) bootL.rotation.x = -legL.rotation.x * 0.6;
+                    if(bootR) bootR.rotation.x = -legR.rotation.x * 0.6;
                     if (!isAttacking && !isWhirlwinding && !isBlocking) { 
-                        playerLimbs.armL.rotation.x = -angle * armAmp; playerLimbs.armR.rotation.x = angle * armAmp; 
+                        armL.rotation.x = -angle * armAmp; armR.rotation.x = angle * armAmp; 
                     }
-                    playerLimbs.torso.rotation.x = isSprintingActive ? 0.3 : 0.1; 
+                    const torso = getLimb('torso');
+                    if(torso) torso.rotation.x = isSprintingActive ? 0.3 : 0.1; 
                 } else {
-                    playerLimbs.legL.rotation.x = 0; playerLimbs.legR.rotation.x = 0; 
-                    if(playerLimbs.bootL) playerLimbs.bootL.rotation.x = 0;
-                    if(playerLimbs.bootR) playerLimbs.bootR.rotation.x = 0;
+                    legL.rotation.x = 0; legR.rotation.x = 0; 
+                    const bootL = getLimb('bootL');
+                    const bootR = getLimb('bootR');
+                    if(bootL) bootL.rotation.x = 0;
+                    if(bootR) bootR.rotation.x = 0;
                     if(!isAttacking && !isWhirlwinding && !isBlocking) { 
-                        playerLimbs.armL.rotation.x = Math.sin(time)*0.05; playerLimbs.armR.rotation.x = -0.1;
+                        armL.rotation.x = Math.sin(time)*0.05; armR.rotation.x = -0.1;
                     }
-                    playerLimbs.torso.rotation.x = 0;
+                    const torso = getLimb('torso');
+                    if(torso) torso.rotation.x = 0;
                 }
             }
 
             if (isBlocking) {
-                playerLimbs.armL.rotation.set(-Math.PI/2, 0, Math.PI/2);
+                const armL = getLimb('armL');
+                if(armL) {
+                    armL.rotation.set(-Math.PI/2, 0, Math.PI/2);
+                }
                 shieldMesh.visible = true;
                 // Aggiorna il colore dello scudo al colore della squadra
                 if (typeof myTeamColor !== 'undefined') {
                     shieldMesh.material.color.setHex(myTeamColor);
                 }
             } else {
-                playerLimbs.armL.rotation.z = 0;
+                const armL = getLimb('armL');
+                if(armL) armL.rotation.z = 0;
                 shieldMesh.visible = false;
             }
             

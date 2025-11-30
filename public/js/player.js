@@ -275,9 +275,32 @@ function spawnGlowEffect(color) {
             const fade = setInterval(() => { intensity -= 0.4; light.intensity = intensity; if (intensity <= 0) { clearInterval(fade); scene.remove(light); } }, 50);
         }
 
+// Flag per logging una sola volta dei limbs mancanti
+let lastLimbsMissingLogTime = 0;
+
 function updateAnimations(delta) {
-            // SAFETY CHECK: Prevent crash if playerLimbs not initialized yet
-            if (!playerLimbs || !playerLimbs.armR || !playerLimbs.armL || !playerLimbs.legL || !playerLimbs.legR) {
+            // PARANOID SAFETY CHECK: Verify EVERY limb exists before accessing
+            const limbsValid = playerLimbs &&
+                               playerLimbs.armR &&
+                               playerLimbs.armL &&
+                               playerLimbs.legL &&
+                               playerLimbs.legR &&
+                               playerLimbs.head;
+            
+            if (!limbsValid) {
+                // Log only once per 5 seconds to avoid spam
+                const now = Date.now();
+                if (now - lastLimbsMissingLogTime > 5000) {
+                    console.warn('⚠️ [ANIMATION] Player limbs incomplete - skipping animation update', {
+                        playerLimbs: !!playerLimbs,
+                        armR: playerLimbs?.armR ? '✓' : '✗',
+                        armL: playerLimbs?.armL ? '✓' : '✗',
+                        legL: playerLimbs?.legL ? '✓' : '✗',
+                        legR: playerLimbs?.legR ? '✓' : '✗',
+                        head: playerLimbs?.head ? '✓' : '✗'
+                    });
+                    lastLimbsMissingLogTime = now;
+                }
                 return;
             }
             
@@ -449,8 +472,24 @@ function toggleWeapon(force) {
         }
 
 function updateSwordAnimation(delta) {
-            // SAFETY CHECK: Prevent crash if playerLimbs or swordContainer not initialized yet
-            if (!playerLimbs || !playerLimbs.armR || !swordContainer) {
+            // PARANOID SAFETY CHECK: Verify EVERY required object exists
+            const swordAnimValid = playerLimbs &&
+                                   playerLimbs.armR &&
+                                   playerLimbs.armL &&
+                                   swordContainer;
+            
+            if (!swordAnimValid) {
+                // Log only once per 5 seconds to avoid spam
+                const now = Date.now();
+                if (now - lastLimbsMissingLogTime > 5000) {
+                    console.warn('⚠️ [SWORD ANIM] Required objects missing - skipping animation', {
+                        playerLimbs: !!playerLimbs,
+                        armR: playerLimbs?.armR ? '✓' : '✗',
+                        armL: playerLimbs?.armL ? '✓' : '✗',
+                        swordContainer: !!swordContainer
+                    });
+                    lastLimbsMissingLogTime = now;
+                }
                 return;
             }
             

@@ -67,6 +67,25 @@ function createPlayer() {
 
     // Aggiungi alla scena
     scene.add(playerMesh);
+    
+    // CRITICAL: Setup playerLimbs object - required by weapon creation functions
+    // AssetManager creates these as children, we need to expose them globally
+    if (!playerLimbs) {
+        playerLimbs = {};
+    }
+    
+    // Extract limbs from playerMesh (added by AssetManager)
+    playerMesh.traverse((child) => {
+        if (child.userData && child.userData.partName) {
+            const partName = child.userData.partName;
+            if (partName === 'armL') playerLimbs.armL = child;
+            else if (partName === 'armR') playerLimbs.armR = child;
+            else if (partName === 'legL') playerLimbs.legL = child;
+            else if (partName === 'legR') playerLimbs.legR = child;
+        }
+    });
+    
+    console.log('[CREATE PLAYER] PlayerLimbs initialized:', {armL: !!playerLimbs.armL, armR: !!playerLimbs.armR, legL: !!playerLimbs.legL, legR: !!playerLimbs.legR});
 }
 
 function updatePlayerColor() {
